@@ -16,13 +16,24 @@ export default {
   },
   methods: {
     create () {
+      // 创建节点组
+      const options = {
+        groups: {
+          taskNodes: {color:{background:'#FCFE8B'}, borderWidth:1, shape:'circle', title:'任务节点'},
+          methodNodes: {color:{background:'#B9F385'}, borderWidth:1, shape:'circle', title:'方法节点'},
+          stepNodes: {color:{background:'#75D6C9'}, borderWidth:1, shape:'circle', title:'步骤节点'},
+          attributeNodes: {color:{background:'#BC7CDA'}, borderWidth:1, shape:'circle', title:'属性节点'},
+          conceptNodes: {color:{background:'#F385A8'}, borderWidth:1, shape:'circle', title:'概念节点'},
+        }
+      };
       // create an array with nodes
       var nodes = new vis.DataSet([
-        {id: 1, label: 'Node 1'},
-        {id: 2, label: 'Node 2'},
-        {id: 3, label: 'Node 3'},
-        {id: 4, label: 'Node 4'},
-        {id: 5, label: 'Node 5'}
+        {id: 1, label: 'Node 1', group: 'taskNodes'},
+        {id: 2, label: 'Node 2', group: 'methodNodes'},
+        {id: 3, label: 'Node 3', group: 'stepNodes'},
+        {id: 4, label: 'Node 4', group: 'attributeNodes'},
+        {id: 5, label: 'Node 5', group: 'conceptNodes'},
+        {id: 6, label: 'Node 6'}
       ]);
 
       // create an array with edges
@@ -41,7 +52,6 @@ export default {
         nodes: nodes,
         edges: edges
       };
-      var options = {};
 
       // 初始化关系图
       var network = new vis.Network(container, data, options);
