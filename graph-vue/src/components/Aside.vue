@@ -1,14 +1,14 @@
 <template>
   <el-aside width="200px">
     <el-menu
-        class="el-menu-vertical-demo"\
+        class="el-menu-vertical-demo"
         @select="handleSelect"
         @open="handleOpen"
         @close="handleClose">
       <el-submenu index="1">
         <template slot="title">
           <i class="el-icon-plus"></i>
-          <span>添加结点</span>
+          <span>添加节点</span>
         </template>
         <el-menu-item-group>
           <el-menu-item index="1-1">
@@ -17,19 +17,19 @@
           </el-menu-item>
           <el-menu-item index="1-2">
             <i class="el-icon-eleme"></i>
-            <span>方法结点</span>
+            <span>方法节点</span>
           </el-menu-item>
           <el-menu-item index="1-3">
             <i class="el-icon-eleme"></i>
-            <span>步骤结点</span>
+            <span>步骤节点</span>
           </el-menu-item>
           <el-menu-item index="1-4">
             <i class="el-icon-eleme"></i>
-            <span>属性结点</span>
+            <span>属性节点</span>
           </el-menu-item>
           <el-menu-item index="1-5">
             <i class="el-icon-eleme"></i>
-            <span>概念结点</span>
+            <span>概念节点</span>
           </el-menu-item>
         </el-menu-item-group>
       </el-submenu>
@@ -67,16 +67,23 @@ export default {
   props:{
     msg:String
   },
+  data() {
+    return{
+      clickType: NaN,
+      clickPath: undefined,
+    }
+  },
   methods: {
     handleSelect(key, keyPath) {
-      console.log(key, keyPath);
+      this.clickType = key
+      this.clickPath = keyPath
     },
-    handleOpen(key, keyPath) {
-      console.log(key, keyPath);
-    },
-    handleClose(key, keyPath) {
-      console.log(key, keyPath);
-    }
+    // handleOpen(key, keyPath) {
+    //   console.log(key, keyPath);
+    // },
+    // handleClose(key, keyPath) {
+    //   console.log(key, keyPath);
+    // },
   }
 }
 </script>
