@@ -1,11 +1,13 @@
 <template>
   <div>
-    <GraphVue></GraphVue>
+<!--    <GraphVue></GraphVue>-->
+    <GraphVis></GraphVis>
   </div>
 </template>
 
 <script>
-import GraphVue from "@/components/GraphVue";
+// import GraphVue from "@/components/GraphVue";
+import GraphVis from "@/components/GraphVis";
 
 export default {
   name: "MainPage",
@@ -13,17 +15,18 @@ export default {
     msg:String
   },
   components:{
-    GraphVue
+    // GraphVue
+    GraphVis
   },
   methods:{
-    zoomOut: function (){
-      console.log('zoomOut')
-      GraphVue.methods.myZoomOut()
-    },
-    zoomIn: function (){
-      console.log('zoomIn')
-      // setZoom('zoomIn')
-    }
+    // zoomOut: function (){
+    //   console.log('zoomOut')
+    //   GraphVue.methods.myZoomOut()
+    // },
+    // zoomIn: function (){
+    //   console.log('zoomIn')
+    //   // setZoom('zoomIn')
+    // }
   }
 }
 </script>

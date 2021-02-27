@@ -1,7 +1,8 @@
 <template>
   <el-aside width="200px">
     <el-menu
-        class="el-menu-vertical-demo"
+        class="el-menu-vertical-demo"\
+        @select="handleSelect"
         @open="handleOpen"
         @close="handleClose">
       <el-submenu index="1">
@@ -12,7 +13,7 @@
         <el-menu-item-group>
           <el-menu-item index="1-1">
             <i class="el-icon-eleme"></i>
-            <span>任务节点</span>
+            <span type = "" @click="AddNode1()">任务节点</span>
           </el-menu-item>
           <el-menu-item index="1-2">
             <i class="el-icon-eleme"></i>
@@ -67,6 +68,9 @@ export default {
     msg:String
   },
   methods: {
+    handleSelect(key, keyPath) {
+      console.log(key, keyPath);
+    },
     handleOpen(key, keyPath) {
       console.log(key, keyPath);
     },
@@ -77,11 +81,19 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
   .el-aside {
-    background-color: #D3DCE6;
-    color: #333;
+    background-color: #E1B2B1;
+    color: #824D56;
     text-align: left;
     width: 20px;
+  }
+  .el-menu-item-group{
+    background-color: #eeeeee;
+    color: #824D56;
+  }
+  .el-submenu{
+    background-color: #dddddd;
+    color: #824D56;
   }
 </style>
