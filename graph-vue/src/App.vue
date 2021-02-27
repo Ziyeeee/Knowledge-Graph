@@ -6,9 +6,11 @@
     <el-container direction="vertical">
       <Header msg="This is a header"></Header>
       <el-container>
+        <Login msg = "This is a login"></Login>
         <Aside msg="This is aside"></Aside>
         <MainPage msg="This is main"></MainPage>
       </el-container>
+
     </el-container>
   </div>
 </template>
@@ -16,18 +18,20 @@
 <script>
 // import HelloWorld from './components/HelloWorld.vue'
 
-import Header from "@/components/Header";
-import Aside from './components/Aside'
-import MainPage from "@/components/MainPage";
+// import Header from "@/components/Header";
+// import Aside from './components/Aside'
+// import MainPage from "@/components/MainPage";
+import Login from "@/components/Login";
 
 export default {
   name: 'App',
   components: {
     // HelloWorld,
 
-    Header,
-    Aside,
-    MainPage
+    // Header,
+    // Aside,
+    // MainPage,
+    Login
   }
 }
 </script>

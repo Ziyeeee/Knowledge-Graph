@@ -1,7 +1,7 @@
 <template>
   <el-aside width="200px">
     <el-menu
-        class="el-menu-vertical-demo"\
+        class="el-menu-vertical-demo"
         @select="handleSelect"
         @open="handleOpen"
         @close="handleClose">
@@ -13,7 +13,7 @@
         <el-menu-item-group>
           <el-menu-item index="1-1">
             <i class="el-icon-eleme"></i>
-            <span type = "" @click="AddNode1()">任务节点</span>
+            <span>任务节点</span>
           </el-menu-item>
           <el-menu-item index="1-2">
             <i class="el-icon-eleme"></i>

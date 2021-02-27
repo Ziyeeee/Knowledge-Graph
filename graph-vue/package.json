@@ -10,9 +10,9 @@
   "dependencies": {
     "axios": "^0.21.1",
     "core-js": "^3.6.5",
-    "element-ui": "^2.15.0",
+    "element-ui": "^2.15.1",
     "vis": "^4.21.0-EOL",
-    "vue": "^2.6.11",
+    "vue": "^2.6.12",
     "vue-axios": "^3.2.4"
   },
   "devDependencies": {
