@@ -2,9 +2,7 @@
   <el-aside width="200px">
     <el-menu
         class="el-menu-vertical-demo"
-        @select="handleSelect"
-        @open="handleOpen"
-        @close="handleClose">
+        @select="handleSelect">
       <el-submenu index="1">
         <template slot="title">
           <i class="el-icon-plus"></i>
@@ -75,11 +73,11 @@ export default {
   },
   methods: {
     handleSelect(key, keyPath) {
-      this.clickType = key
-      this.clickPath = keyPath
+      this.$store.commit('updateClickType', keyPath);
+      console.log(this.$store.state.clickPath);
     },
     // handleOpen(key, keyPath) {
-    //   console.log(key, keyPath);
+    //
     // },
     // handleClose(key, keyPath) {
     //   console.log(key, keyPath);
