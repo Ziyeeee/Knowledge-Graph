@@ -3,35 +3,32 @@
     <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
     <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
     <!-- <GraphVue></GraphVue>-->
-    <el-container direction="vertical">
-      <Header msg="This is a header"></Header>
+    <el-container v-if="$route.meta.keepalive" direction="vertical">
+        <Header msg="This is a header"></Header>
       <el-container>
-        <Login msg = "This is a login"></Login>
         <Aside msg="This is aside"></Aside>
         <MainPage msg="This is main"></MainPage>
       </el-container>
 
     </el-container>
+    <router-view v-if="!$route.meta.keepalive"></router-view>
   </div>
 </template>
 
 <script>
 // import HelloWorld from './components/HelloWorld.vue'
 
-// import Header from "@/components/Header";
-// import Aside from './components/Aside'
-// import MainPage from "@/components/MainPage";
-import Login from "@/components/Login";
-
+import Header from "@/components/Header";
+import Aside from './components/Aside'
+import MainPage from "@/components/MainPage";
 export default {
   name: 'App',
   components: {
     // HelloWorld,
 
-    // Header,
-    // Aside,
-    // MainPage,
-    Login
+    Header,
+    Aside,
+    MainPage,
   }
 }
 </script>
