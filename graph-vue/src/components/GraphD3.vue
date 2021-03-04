@@ -17,13 +17,27 @@ var edges = [{source: 0, target: 2},
   {source: 0, target: 1},
   {source: 1, target: 3},
   {source: 1, target: 4}];
+// var nodes = [];
+// var edges = [];
 
 export default {
   name: "GraphD3",
   data() {
     return {
-      links: [],
-      gs: [],
+      minDistance: 30,
+      width: 800,
+      height:600,
+
+      node: [],
+      link: [],
+
+      mouseLink: [],
+      cursor: {},
+      mouse: null,
+
+      svg: {},
+      simulation: {},
+      dragger: {},
     }
   },
   mounted() {
@@ -31,72 +45,115 @@ export default {
   },
   methods:{
     initialGraph(nodes, edges){
-      console.log(nodes);
-      console.log(edges);
+      this.svg = d3.select("#GraphD3")
+          .property("value", {nodes: nodes, links: edges})
+          .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
+          // .attr("cursor", "crosshair")
+          .on("mouseleave", this.mouseLeft)
+          .on("mousemove", this.mouseMoved)
+          .on("click", this.clicked);
 
-      var svg = d3.select("#GraphD3");
-
-      var marge = {top:60,bottom:60,left:60,right:60};
-      var width = svg.attr("width")
-      var height = svg.attr("height")
-      var g = svg.append("g")
-          .attr("transform","translate("+marge.top+","+marge.left+")");
-
-      var forceSimulation = d3.forceSimulation()
-          .force("link",d3.forceLink())
-          .force("charge",d3.forceManyBody())
-          .force("center",d3.forceCenter(width/2, height/2));
-
-      forceSimulation.nodes(nodes)
+      this.simulation = d3.forceSimulation(nodes)
+          .force("charge", d3.forceManyBody().strength(-60))
+          .force("link", d3.forceLink(edges))
+          .force("x", d3.forceX())
+          .force("y", d3.forceY())
           .on("tick", this.ticked);
 
-      forceSimulation.force("link")
-          .links(edges);
+      this.dragger = d3.drag(this.simulation)
+          .on("start.mouse", this.mouseLeft)
+          .on("end.mouse", this.mouseMoved);
 
+      this.link = this.svg.append("g")
+          .attr("stroke", "#999")
+          .selectAll("line");
 
+      this.mouselink = this.svg.append("g")
+          .attr("stroke", "red")
+          .selectAll("line");
 
-      this.links = g.append("g")
-          .selectAll("line")
-          .data(edges)
-          .enter()
-          .append("line");
+      this.node = this.svg.append("g")
+          .selectAll("circle");
 
-      this.gs = g.selectAll(".circleText")
-          .data(nodes)
-          .enter()
-          .append("g")
-          .attr("transform",function(d){
-            var cirX = d.x;
-            var cirY = d.y;
-            return "translate("+cirX+","+cirY+")";
-          })
-          .call(d3.drag()
-              .on("start",this.started)
-              .on("drag",this.dragged)
-              .on("end",this.ended)
-          );
-      //绘制节点
-      this.gs.append("circle")
-          .attr("r",10)
-      //文字
-      this.gs.append("text")
-          .attr("x",-10)
-          .attr("y",-20)
-          .attr("dy",10)
-          .text(function(d){
-            return d.label;
-          })
+      this.cursor = this.svg.append("circle")
+          .attr("display", "none")
+          .attr("fill", "none")
+          .attr("stroke", "red")
+          .attr("r", this.minDistance - 5);
+
+      this.spawn({x: 0, y: 0});
     },
     ticked() {
-      this.links
-          .attr("x1",function(d){return d.source.x;})
-          .attr("y1",function(d){return d.source.y;})
-          .attr("x2",function(d){return d.target.x;})
-          .attr("y2",function(d){return d.target.y;})
+      this.node.attr("cx", d => d.x)
+          .attr("cy", d => d.y)
 
-      this.gs
-          .attr("transform",function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-    }
+      this.link.attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
+
+      this.mouselink = this.mouselink
+          .data(this.mouse ? nodes.filter(node => this.inRange(this.mouse, node)) : [])
+          .join("line")
+          .attr("x1", this.mouse && this.mouse.x)
+          .attr("y1", this.mouse && this.mouse.y)
+          .attr("x2", d => d.x)
+          .attr("y2", d => d.y);
+
+      this.cursor
+          .attr("display", this.mouse ? null : "none")
+          .attr("cx", this.mouse && this.mouse.x)
+          .attr("cy", this.mouse && this.mouse.y);
+    },
+    mouseLeft() {
+      this.mouse = null;
+    },
+    inRange({x: sx, y: sy}, {x: tx, y: ty}) {
+      return Math.hypot(sx - tx, sy - ty) <= this.minDistance;
+    },
+    mouseMoved(event) {
+      const [x, y] = d3.pointer(event);
+      this.mouse = {x, y};
+      this.simulation.alpha(0.3).restart();
+    },
+    clicked(event) {
+      this.mouseMoved.call(this, event);
+      this.spawn({x: this.mouse.x, y: this.mouse.y});
+    },
+    spawn(source) {
+      nodes.push(source);
+
+      for (const target of nodes) {
+        if (this.inRange(source, target)) {
+          edges.push({source, target});
+        }
+      }
+
+      this.link = this.link
+          .data(edges)
+          .join("line");
+
+      this.node = this.node
+          .data(nodes)
+          .join(
+              enter => enter.append("circle").attr("r", 0)
+                  .call(enter => enter.transition().attr("r", 5))
+                  .call(this.dragger),
+              update => update,
+              exit => exit.remove()
+          );
+
+      this.simulation.nodes(nodes);
+      this.simulation.force("link").links(edges);
+      this.simulation.alpha(1).restart();
+
+      this.svg.property("value", {
+        nodes: nodes.map(d => ({id: d.index})),
+        links: edges.map(d => ({source: d.source.index, target: d.target.index}))
+      });
+
+      this.svg.dispatch("input");
+    },
   },
 }
 </script>
