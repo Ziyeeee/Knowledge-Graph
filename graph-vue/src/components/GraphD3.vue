@@ -8,15 +8,15 @@
 <script>
 import * as d3 from 'd3';
 
-var nodes = [{index: 1, label: 'Node 1'},
-  {index: 2, label: 'Node 2'},
-  {index: 3, label: 'Node 3'},
-  {index: 4, label: 'Node 4'},
-  {index: 5, label: 'Node 5'}];
-var edges = [{source: 1, target: 3},
-  {source: 1, target: 2},
-  {source: 2, target: 4},
-  {source: 2, target: 5}];
+var nodes = [{index: 0, label: 'Node 1'},
+  {index: 1, label: 'Node 2'},
+  {index: 2, label: 'Node 3'},
+  {index: 3, label: 'Node 4'},
+  {index: 4, label: 'Node 5'}];
+var edges = [{source: 0, target: 2},
+  {source: 0, target: 1},
+  {source: 1, target: 3},
+  {source: 1, target: 4}];
 
 export default {
   name: "GraphD3",
@@ -55,11 +55,11 @@ export default {
 
 
 
-      // this.links = g.append("g")
-      //     .selectAll("line")
-      //     .data(edges)
-      //     .enter()
-      //     .append("line");
+      this.links = g.append("g")
+          .selectAll("line")
+          .data(edges)
+          .enter()
+          .append("line");
 
       this.gs = g.selectAll(".circleText")
           .data(nodes)
@@ -70,11 +70,11 @@ export default {
             var cirY = d.y;
             return "translate("+cirX+","+cirY+")";
           })
-          // .call(d3.drag()
-          //     .on("start",this.started)
-          //     .on("drag",this.dragged)
-          //     .on("end",this.ended)
-          // );
+          .call(d3.drag()
+              .on("start",this.started)
+              .on("drag",this.dragged)
+              .on("end",this.ended)
+          );
       //绘制节点
       this.gs.append("circle")
           .attr("r",10)
@@ -88,11 +88,11 @@ export default {
           })
     },
     ticked() {
-      // this.links
-      //     .attr("x1",function(d){return d.source.x;})
-      //     .attr("y1",function(d){return d.source.y;})
-      //     .attr("x2",function(d){return d.target.x;})
-      //     .attr("y2",function(d){return d.target.y;})
+      this.links
+          .attr("x1",function(d){return d.source.x;})
+          .attr("y1",function(d){return d.source.y;})
+          .attr("x2",function(d){return d.target.x;})
+          .attr("y2",function(d){return d.target.y;})
 
       this.gs
           .attr("transform",function(d) { return "translate(" + d.x + "," + d.y + ")"; })
