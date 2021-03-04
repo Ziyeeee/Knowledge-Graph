@@ -1,13 +1,11 @@
 <template>
   <div>
-<!--    <GraphVue></GraphVue>-->
-    <GraphVis></GraphVis>
+    <GraphD3></GraphD3>
   </div>
 </template>
 
 <script>
-// import GraphVue from "@/components/GraphVue";
-import GraphVis from "@/components/GraphVis";
+import GraphD3 from "@/components/GraphD3";
 
 export default {
   name: "MainPage",
@@ -15,8 +13,7 @@ export default {
     msg:String
   },
   components:{
-    // GraphVue
-    GraphVis
+    GraphD3
   },
   methods:{
     // zoomOut: function (){
