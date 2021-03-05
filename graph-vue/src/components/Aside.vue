@@ -74,7 +74,7 @@ export default {
   methods: {
     handleSelect(key, keyPath) {
       this.$store.commit('updateClickType', keyPath);
-      console.log(this.$store.state.clickPath);
+      // console.log(this.$store.state.clickPath);
     },
     // handleOpen(key, keyPath) {
     //

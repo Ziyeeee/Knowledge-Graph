@@ -4,27 +4,30 @@
   </div>
 </template>
 
-<!--<script src="../assets/js/d3.v6.js"></script>-->
 <script>
 import * as d3 from 'd3';
 
-var nodes = [{index: 0, label: 'Node 1'},
-  {index: 1, label: 'Node 2'},
-  {index: 2, label: 'Node 3'},
-  {index: 3, label: 'Node 4'},
-  {index: 4, label: 'Node 5'}];
+var nodes = [{index: 0, label: 'Node 1', groupId: 0},
+  {index: 1, label: 'Node 2', groupId: 1},
+  {index: 2, label: 'Node 3', groupId: 2},
+  {index: 3, label: 'Node 4', groupId: 3},
+  {index: 4, label: 'Node 5', groupId: 4}];
 var edges = [{source: 0, target: 2},
   {source: 0, target: 1},
   {source: 1, target: 3},
   {source: 1, target: 4}];
-// var nodes = [];
-// var edges = [];
+const colorList = [
+  '#FCFE8B',
+  '#B9F385',
+  '#75D6C9',
+  '#BC7CDA',
+  '#F385A8',
+];
 
 export default {
   name: "GraphD3",
   data() {
     return {
-      minDistance: 30,
       width: 800,
       height:600,
 
@@ -46,16 +49,15 @@ export default {
   methods:{
     initialGraph(nodes, edges){
       this.svg = d3.select("#GraphD3")
-          .property("value", {nodes: nodes, links: edges})
           .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
-          .attr("cursor", "crosshair")
           .on("mouseleave", this.mouseLeft)
           .on("mousemove", this.mouseMoved)
           .on("click", this.clicked);
 
       this.simulation = d3.forceSimulation(nodes)
-          .force("charge", d3.forceManyBody().strength(-100))
-          .force("link", d3.forceLink(edges))
+          .force("charge", d3.forceManyBody().strength(-800))
+          .force("link", d3.forceLink(edges).distance(100))
+          .force('collide', d3.forceCollide().radius(20))
           .force("x", d3.forceX())
           .force("y", d3.forceY())
           .on("tick", this.ticked);
@@ -63,23 +65,13 @@ export default {
       this.dragger = this.drag(this.simulation);
 
       this.link = this.svg.append("g")
-          .attr("stroke", "#999")
+          .attr("stroke", "#666")
           .selectAll("line");
-
-      // this.mouselink = this.svg.append("g")
-      //     .attr("stroke", "red")
-      //     .selectAll("line");
 
       this.node = this.svg.append("g")
           .selectAll("circle");
 
-      // this.cursor = this.svg.append("circle")
-      //     .attr("display", "none")
-      //     .attr("fill", "none")
-      //     .attr("stroke", "red")
-      //     .attr("r", this.minDistance - 5);
-
-      this.spawn({x: 0, y: 0});
+      this.updateGraph();
     },
     ticked() {
       this.node.attr("cx", d => d.x)
@@ -89,19 +81,6 @@ export default {
           .attr("y1", d => d.source.y)
           .attr("x2", d => d.target.x)
           .attr("y2", d => d.target.y);
-
-      // this.mouselink = this.mouselink
-      //     .data(this.mouse ? nodes.filter(node => this.inRange(this.mouse, node)) : [])
-      //     .join("line")
-      //     .attr("x1", this.mouse && this.mouse.x)
-      //     .attr("y1", this.mouse && this.mouse.y)
-      //     .attr("x2", d => d.x)
-      //     .attr("y2", d => d.y);
-      //
-      // this.cursor
-      //     .attr("display", this.mouse ? null : "none")
-      //     .attr("cx", this.mouse && this.mouse.x)
-      //     .attr("cy", this.mouse && this.mouse.y);
     },
     mouseLeft() {
       this.mouse = null;
@@ -116,17 +95,35 @@ export default {
     },
     clicked(event) {
       this.mouseMoved.call(this, event);
-      this.spawn({x: this.mouse.x, y: this.mouse.y});
+      this.addNode({x: this.mouse.x, y: this.mouse.y});
     },
-    spawn(source) {
-      nodes.push(source);
+    addNode(source) {
+      if(this.$store.state.clickPath[0] == "1") {
+        nodes.push({x: source.x, y: source.y, groupId: parseInt(this.$store.state.clickPath[1][2]) - 1});
+        // console.log(nodes, this.$store.state.clickPath[1][2])
+        this.node = this.node
+            .data(nodes)
+            .join(
+                enter => enter.append("circle").attr("r", 0).attr("fill", d => colorList[d.groupId])
+                    .call(enter => enter.transition().attr("r", 20))
+                    .call(this.dragger),
+                update => update,
+                exit => exit.remove()
+            );
 
-      // for (const target of nodes) {
-      //   if (this.inRange(source, target)) {
-      //     edges.push({source, target});
-      //   }
-      // }
+        this.simulation.nodes(nodes);
+        this.simulation.alpha(1).restart();
+      }
+    },
+    addLink() {
+      this.link = this.link
+          .data(edges)
+          .join("line");
 
+      this.simulation.force("link").links(edges);
+      this.simulation.alpha(1).restart();
+    },
+    updateGraph() {
       this.link = this.link
           .data(edges)
           .join("line");
@@ -134,8 +131,8 @@ export default {
       this.node = this.node
           .data(nodes)
           .join(
-              enter => enter.append("circle").attr("r", 0)
-                  .call(enter => enter.transition().attr("r", 5))
+              enter => enter.append("circle").attr("r", 0).attr("fill", d => colorList[d.groupId])
+                  .call(enter => enter.transition().attr("r", 20))
                   .call(this.dragger),
               update => update,
               exit => exit.remove()
@@ -144,16 +141,9 @@ export default {
       this.simulation.nodes(nodes);
       this.simulation.force("link").links(edges);
       this.simulation.alpha(1).restart();
-
-      this.svg.property("value", {
-        nodes: nodes.map(d => ({id: d.index})),
-        links: edges.map(d => ({source: d.source.index, target: d.target.index}))
-      });
-
-      this.svg.dispatch("input");
     },
     drag(simulation) {
-      function dragstarted(event) {
+      function dragStarted(event) {
         if (!event.active) simulation.alphaTarget(0.3).restart();
         event.subject.fx = event.subject.x;
         event.subject.fy = event.subject.y;
@@ -164,16 +154,16 @@ export default {
         event.subject.fy = event.y;
       }
 
-      function dragended(event) {
+      function dragEnded(event) {
         if (!event.active) simulation.alphaTarget(0);
         event.subject.fx = null;
         event.subject.fy = null;
       }
 
       return d3.drag()
-          .on("start", dragstarted)
+          .on("start", dragStarted)
           .on("drag", dragged)
-          .on("end", dragended);
+          .on("end", dragEnded);
     }
   },
 }
