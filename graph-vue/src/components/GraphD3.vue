@@ -48,38 +48,36 @@ export default {
       this.svg = d3.select("#GraphD3")
           .property("value", {nodes: nodes, links: edges})
           .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
-          // .attr("cursor", "crosshair")
+          .attr("cursor", "crosshair")
           .on("mouseleave", this.mouseLeft)
           .on("mousemove", this.mouseMoved)
           .on("click", this.clicked);
 
       this.simulation = d3.forceSimulation(nodes)
-          .force("charge", d3.forceManyBody().strength(-60))
+          .force("charge", d3.forceManyBody().strength(-100))
           .force("link", d3.forceLink(edges))
           .force("x", d3.forceX())
           .force("y", d3.forceY())
           .on("tick", this.ticked);
 
-      this.dragger = d3.drag(this.simulation)
-          .on("start.mouse", this.mouseLeft)
-          .on("end.mouse", this.mouseMoved);
+      this.dragger = this.drag(this.simulation);
 
       this.link = this.svg.append("g")
           .attr("stroke", "#999")
           .selectAll("line");
 
-      this.mouselink = this.svg.append("g")
-          .attr("stroke", "red")
-          .selectAll("line");
+      // this.mouselink = this.svg.append("g")
+      //     .attr("stroke", "red")
+      //     .selectAll("line");
 
       this.node = this.svg.append("g")
           .selectAll("circle");
 
-      this.cursor = this.svg.append("circle")
-          .attr("display", "none")
-          .attr("fill", "none")
-          .attr("stroke", "red")
-          .attr("r", this.minDistance - 5);
+      // this.cursor = this.svg.append("circle")
+      //     .attr("display", "none")
+      //     .attr("fill", "none")
+      //     .attr("stroke", "red")
+      //     .attr("r", this.minDistance - 5);
 
       this.spawn({x: 0, y: 0});
     },
@@ -92,18 +90,18 @@ export default {
           .attr("x2", d => d.target.x)
           .attr("y2", d => d.target.y);
 
-      this.mouselink = this.mouselink
-          .data(this.mouse ? nodes.filter(node => this.inRange(this.mouse, node)) : [])
-          .join("line")
-          .attr("x1", this.mouse && this.mouse.x)
-          .attr("y1", this.mouse && this.mouse.y)
-          .attr("x2", d => d.x)
-          .attr("y2", d => d.y);
-
-      this.cursor
-          .attr("display", this.mouse ? null : "none")
-          .attr("cx", this.mouse && this.mouse.x)
-          .attr("cy", this.mouse && this.mouse.y);
+      // this.mouselink = this.mouselink
+      //     .data(this.mouse ? nodes.filter(node => this.inRange(this.mouse, node)) : [])
+      //     .join("line")
+      //     .attr("x1", this.mouse && this.mouse.x)
+      //     .attr("y1", this.mouse && this.mouse.y)
+      //     .attr("x2", d => d.x)
+      //     .attr("y2", d => d.y);
+      //
+      // this.cursor
+      //     .attr("display", this.mouse ? null : "none")
+      //     .attr("cx", this.mouse && this.mouse.x)
+      //     .attr("cy", this.mouse && this.mouse.y);
     },
     mouseLeft() {
       this.mouse = null;
@@ -123,11 +121,11 @@ export default {
     spawn(source) {
       nodes.push(source);
 
-      for (const target of nodes) {
-        if (this.inRange(source, target)) {
-          edges.push({source, target});
-        }
-      }
+      // for (const target of nodes) {
+      //   if (this.inRange(source, target)) {
+      //     edges.push({source, target});
+      //   }
+      // }
 
       this.link = this.link
           .data(edges)
@@ -154,6 +152,29 @@ export default {
 
       this.svg.dispatch("input");
     },
+    drag(simulation) {
+      function dragstarted(event) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        event.subject.fx = event.subject.x;
+        event.subject.fy = event.subject.y;
+      }
+
+      function dragged(event) {
+        event.subject.fx = event.x;
+        event.subject.fy = event.y;
+      }
+
+      function dragended(event) {
+        if (!event.active) simulation.alphaTarget(0);
+        event.subject.fx = null;
+        event.subject.fy = null;
+      }
+
+      return d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended);
+    }
   },
 }
 </script>
