@@ -98,8 +98,8 @@ export default {
       this.addNode({x: this.mouse.x, y: this.mouse.y});
     },
     addNode(source) {
-      if(this.$store.state.clickPath[0] == "1") {
-        nodes.push({x: source.x, y: source.y, groupId: parseInt(this.$store.state.clickPath[1][2]) - 1});
+      if(this.$store.state.clickPath[0] == "0") {
+        nodes.push({x: source.x, y: source.y, groupId: parseInt(this.$store.state.clickPath[1][2])});
         // console.log(nodes, this.$store.state.clickPath[1][2])
         this.node = this.node
             .data(nodes)

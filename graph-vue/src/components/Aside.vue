@@ -3,29 +3,29 @@
     <el-menu
         class="el-menu-vertical-demo"
         @select="handleSelect">
-      <el-submenu index="1">
+      <el-submenu index="0">
         <template slot="title">
           <i class="el-icon-plus"></i>
           <span>添加节点</span>
         </template>
         <el-menu-item-group>
-          <el-menu-item index="1-1">
+          <el-menu-item index="0-0">
             <i class="el-icon-eleme"></i>
             <span>任务节点</span>
           </el-menu-item>
-          <el-menu-item index="1-2">
+          <el-menu-item index="0-1">
             <i class="el-icon-eleme"></i>
             <span>方法节点</span>
           </el-menu-item>
-          <el-menu-item index="1-3">
+          <el-menu-item index="0-2">
             <i class="el-icon-eleme"></i>
             <span>步骤节点</span>
           </el-menu-item>
-          <el-menu-item index="1-4">
+          <el-menu-item index="0-3">
             <i class="el-icon-eleme"></i>
             <span>属性节点</span>
           </el-menu-item>
-          <el-menu-item index="1-5">
+          <el-menu-item index="0-4">
             <i class="el-icon-eleme"></i>
             <span>概念节点</span>
           </el-menu-item>
