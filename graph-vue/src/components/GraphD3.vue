@@ -73,30 +73,26 @@ export default {
 
       this.updateGraph();
     },
-    ticked() {
-      this.node.attr("cx", d => d.x)
-          .attr("cy", d => d.y)
 
-      this.link.attr("x1", d => d.source.x)
-          .attr("y1", d => d.source.y)
-          .attr("x2", d => d.target.x)
-          .attr("y2", d => d.target.y);
-    },
     mouseLeft() {
       this.mouse = null;
-    },
-    inRange({x: sx, y: sy}, {x: tx, y: ty}) {
-      return Math.hypot(sx - tx, sy - ty) <= this.minDistance;
     },
     mouseMoved(event) {
       const [x, y] = d3.pointer(event);
       this.mouse = {x, y};
       this.simulation.alpha(0.3).restart();
     },
+    mouseEnterNode(d) {
+      d3.select(d.target).attr("fill-opacity", 1);
+    },
+    mouseLeaveNode(d) {
+      d3.select(d.target).attr("fill-opacity", 0.8);
+    },
     clicked(event) {
       this.mouseMoved.call(this, event);
       this.addNode({x: this.mouse.x, y: this.mouse.y});
     },
+
     addNode(source) {
       if(this.$store.state.clickPath[0] == "0") {
         nodes.push({x: source.x, y: source.y, groupId: parseInt(this.$store.state.clickPath[1][2])});
@@ -104,12 +100,16 @@ export default {
         this.node = this.node
             .data(nodes)
             .join(
-                enter => enter.append("circle").attr("r", 0).attr("fill", d => colorList[d.groupId])
+                enter => enter.append("circle").attr("r", 0).attr("fill", d => colorList[d.groupId]).attr("fill-opacity", 0.8)
                     .call(enter => enter.transition().attr("r", 20))
-                    .call(this.dragger),
+                    .call(this.dragger)
+                    .on("mouseenter", d => this.mouseEnterNode(d))
+                    .on("mouseleave", d => this.mouseLeaveNode(d)),
                 update => update,
                 exit => exit.remove()
-            );
+            )
+
+
 
         this.simulation.nodes(nodes);
         this.simulation.alpha(1).restart();
@@ -131,9 +131,11 @@ export default {
       this.node = this.node
           .data(nodes)
           .join(
-              enter => enter.append("circle").attr("r", 0).attr("fill", d => colorList[d.groupId])
+              enter => enter.append("circle").attr("r", 0).attr("fill", d => colorList[d.groupId]).attr("fill-opacity", 0.8)
                   .call(enter => enter.transition().attr("r", 20))
-                  .call(this.dragger),
+                  .call(this.dragger)
+                  .on("mouseenter", d => this.mouseEnterNode(d))
+                  .on("mouseleave", d => this.mouseLeaveNode(d)),
               update => update,
               exit => exit.remove()
           );
@@ -141,6 +143,16 @@ export default {
       this.simulation.nodes(nodes);
       this.simulation.force("link").links(edges);
       this.simulation.alpha(1).restart();
+    },
+
+    ticked() {
+      this.node.attr("cx", d => d.x)
+          .attr("cy", d => d.y)
+
+      this.link.attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
     },
     drag(simulation) {
       function dragStarted(event) {
@@ -164,7 +176,10 @@ export default {
           .on("start", dragStarted)
           .on("drag", dragged)
           .on("end", dragEnded);
-    }
+    },
+    // inRange({x: sx, y: sy}, {x: tx, y: ty}) {
+    //   return Math.hypot(sx - tx, sy - ty) <= this.minDistance;
+    // },
   },
 }
 </script>
