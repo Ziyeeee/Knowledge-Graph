@@ -41,7 +41,7 @@ export default {
       mouseIsSelect: false,
 
       isShown: false,
-      selectedId: NaN,
+      selectedNodeId: NaN,
 
       svg: {},
       simulation: {},
@@ -78,7 +78,7 @@ export default {
           .selectAll("line");
       this.node = this.svg.append("g")
           .selectAll("circle");
-      this.nodetext = this.svg.append("g")
+      this.nodeText = this.svg.append("g")
           .selectAll("text");
 
       this.updateGraph();
@@ -107,13 +107,15 @@ export default {
     // 编辑节点
     Openbox(d)
     {
-       this.selectedId = d3.select(d.target).attr("index");
+       this.selectedNodeId = d3.select(d.target).attr("index");
        this.isShown = true;
     },
-    EditNode(text){
-      nodes[this.selectedId].label = text;
+    EditNode(nodeLabel){
+      nodes[this.selectedNodeId].label = nodeLabel;
       this.isShown = false;
-      // console.log(nodes);
+      this.drawNodeText();
+      console.log(nodes);
+      
     },
     // 节点绘制相关
     addNode(source) {
@@ -143,15 +145,18 @@ export default {
               update => update,
               exit => exit.remove()
           );
-      this.nodetext = this.nodetext
+      this.drawNodeText();
+    },
+    drawNodeText() {
+      this.nodeText = this.nodeText
           .data(nodes)
           .join(
-              enter => enter.append("text").attr("text-anchor","middle")
-                  .text(function (d){
-                    return d.label
-                  })
+              enter => enter.append("text")
+                  .attr("id", d => d.index)
+                  .attr("text-anchor","middle")
+                  .text(d => d.label)
                   .call(this.dragger),
-              update => update,
+              update => update.text(d => d.label),
               exit => exit.remove()
           );
     },
@@ -189,7 +194,7 @@ export default {
           .attr("x2", d => d.target.x)
           .attr("y2", d => d.target.y);
 
-      this.nodetext.attr('transform', function(d) {
+      this.nodeText.attr('transform', function(d) {
         return 'translate(' + d.x + ',' + d.y + ')';
       });
     },
