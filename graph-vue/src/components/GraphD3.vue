@@ -42,7 +42,6 @@ export default {
       mouseIsSelect: false,
       cursor: null,
 
-
       isShown: false,
       selectedNode: {},
       selectedNodeId: NaN,
@@ -224,6 +223,10 @@ export default {
         if (!event.active) simulation.alphaTarget(0.3).restart();
         event.subject.fx = event.subject.x;
         event.subject.fy = event.subject.y;
+        simulation.force("charge", null)
+            .force("link", null)
+            .force("x", null)
+            .force("y", null);
       }
 
       function dragged(event) {
@@ -235,6 +238,10 @@ export default {
         if (!event.active) simulation.alphaTarget(0);
         event.subject.fx = null;
         event.subject.fy = null;
+        simulation.force("charge", d3.forceManyBody().strength(-1000))
+            .force("link", d3.forceLink(edges).distance(100))
+            .force("x", d3.forceX())
+            .force("y", d3.forceY());
       }
 
       return d3.drag()
