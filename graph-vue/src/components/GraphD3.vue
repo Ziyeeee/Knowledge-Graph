@@ -55,6 +55,7 @@ export default {
     this.initialGraph(nodes, edges);
   },
   methods:{
+    // 初始化图
     initialGraph(nodes, edges){
       this.svg = d3.select("#GraphD3")
           .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
@@ -81,14 +82,14 @@ export default {
 
       this.updateGraph();
     },
-
+    // 鼠标事件
     mouseLeft() {
       this.mouse = null;
     },
     mouseMoved(event) {
       const [x, y] = d3.pointer(event);
       this.mouse = {x, y};
-      this.simulation.alpha(0.3).restart();
+      // this.simulation.alpha(0.3).restart();
     },
     mouseEnterNode(d) {
       this.mouseIsSelect = true;
@@ -102,29 +103,28 @@ export default {
       this.mouseMoved.call(this, event);
       this.addNode({x: this.mouse.x, y: this.mouse.y});
     },
-
+    // 编辑节点
     Openbox(d)
     {
        this.selectedId = d3.select(d.target).attr("index");
        this.isShown = true;
     },
-
     EditNode(text){
       nodes[this.selectedId].label = text;
       this.isShown = false;
-      console.log(nodes);
+      // console.log(nodes);
     },
-
+    // 节点绘制相关
     addNode(source) {
       if(this.$store.state.clickPath && this.$store.state.clickPath[0] == "0" && !this.mouseIsSelect) {
         nodes.push({index: nodes.length, groupId: parseInt(this.$store.state.clickPath[1][2]), x: source.x, y: source.y});
-        console.log(nodes);
+        // console.log(nodes);
+
+        this.drawNodes();
+
+        this.simulation.nodes(nodes);
+        this.simulation.alpha(1).restart();
       }
-
-      this.drawNodes();
-
-      this.simulation.nodes(nodes);
-      this.simulation.alpha(1).restart();
     },
     drawNodes() {
       this.node = this.node
@@ -143,7 +143,7 @@ export default {
               exit => exit.remove()
           )
     },
-
+    // 边绘制相关
     addLink() {
       this.drawLinks();
 
@@ -157,7 +157,7 @@ export default {
               enter => enter.append("line").attr("stroke", "#666").attr("stroke-width", 3).attr("stroke-opacity", opacity)
           );
     },
-
+    // 更新图
     updateGraph() {
       this.drawLinks();
 
