@@ -42,7 +42,9 @@ export default {
       mouseIsSelect: false,
       cursor: null,
 
+
       isShown: false,
+      selectedNode: {},
       selectedNodeId: NaN,
 
       svg: {},
@@ -85,7 +87,6 @@ export default {
       this.cursor = this.svg.append("circle")
           .attr("display","none")
           .attr("fill", "none")
-          .attr("opacity", 0.5)
           .attr("stroke-width", 2)
           .attr("r", radius)
 
@@ -102,16 +103,15 @@ export default {
     },
     mouseEnterNode(d) {
       this.mouseIsSelect = true;
-      let selectedNode = d3.select(d.target);
+      this.selectedNode = nodes[d3.select(d.target).attr("index")];
       this.cursor.attr("display", null)
-          .attr("stroke", colorList[nodes[selectedNode.attr("index")].groupId])
-          .attr("cx", selectedNode.attr("cx"))
-          .attr("cy", selectedNode.attr("cy"))
+          .attr("stroke", colorList[this.selectedNode.groupId])
+          .attr("cx", this.selectedNode.x)
+          .attr("cy", this.selectedNode.y)
           .transition()
-          .attr("r", radius * 2)
-
+          .attr("r", 40);
     },
-    mouseLeaveNode(d) {
+    mouseLeaveNode() {
       this.mouseIsSelect = false;
       // let selectedNode = d3.select(d.target);
       this.cursor.transition()
@@ -126,11 +126,11 @@ export default {
     // 编辑节点信息
     Openbox(d)
     {
-       this.selectedNodeId = d3.select(d.target).attr("index");
+       this.selectedNode = nodes[d3.select(d.target).attr("index")];
        this.isShown = true;
     },
     EditNode(nodeLabel){
-      nodes[this.selectedNodeId].label = nodeLabel;
+      this.selectedNode.label = nodeLabel;
       this.isShown = false;
       this.drawNodeText();
       console.log(nodes);
@@ -206,18 +206,18 @@ export default {
 
     ticked() {
       this.node.attr("cx", d => d.x)
-          .attr("cy", d => d.y)
+          .attr("cy", d => d.y);
 
       this.link.attr("x1", d => d.source.x)
           .attr("y1", d => d.source.y)
           .attr("x2", d => d.target.x)
           .attr("y2", d => d.target.y);
 
-      this.nodeText.attr('transform', function(d) {
-        return 'translate(' + d.x + ',' + d.y + ')';
+      this.nodeText.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
 
-
-      });
+      // console.log(this.cursorNode.x);
+      this.cursor.attr("cx", this.selectedNode.x)
+          .attr("cy", this.selectedNode.y);
     },
     drag(simulation) {
       function dragStarted(event) {
