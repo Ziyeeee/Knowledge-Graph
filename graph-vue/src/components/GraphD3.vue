@@ -25,7 +25,8 @@ const colorList = [
   '#BC7CDA',
   '#F385A8',
 ];
-const opacity = 0.8;
+const opacity = 1;
+const radius = 20;
 
 export default {
   name: "GraphD3",
@@ -39,6 +40,7 @@ export default {
 
       mouse: null,
       mouseIsSelect: false,
+      cursor: null,
 
       isShown: false,
       selectedNodeId: NaN,
@@ -65,7 +67,7 @@ export default {
           .on("dbcklick", this.addInfo);
 
       this.simulation = d3.forceSimulation(nodes)
-          .force("charge", d3.forceManyBody().strength(-800))
+          .force("charge", d3.forceManyBody().strength(-1000))
           .force("link", d3.forceLink(edges).distance(100))
           .force('collide', d3.forceCollide().radius(20))
           .force("x", d3.forceX())
@@ -80,6 +82,12 @@ export default {
           .selectAll("circle");
       this.nodeText = this.svg.append("g")
           .selectAll("text");
+      this.cursor = this.svg.append("circle")
+          .attr("display","none")
+          .attr("fill", "none")
+          .attr("opacity", 0.5)
+          .attr("stroke-width", 2)
+          .attr("r", radius)
 
       this.updateGraph();
     },
@@ -94,17 +102,28 @@ export default {
     },
     mouseEnterNode(d) {
       this.mouseIsSelect = true;
-      d3.select(d.target).attr("fill-opacity", 1);
+      let selectedNode = d3.select(d.target);
+      this.cursor.attr("display", null)
+          .attr("stroke", colorList[nodes[selectedNode.attr("index")].groupId])
+          .attr("cx", selectedNode.attr("cx"))
+          .attr("cy", selectedNode.attr("cy"))
+          .transition()
+          .attr("r", radius * 2)
+
     },
     mouseLeaveNode(d) {
       this.mouseIsSelect = false;
-      d3.select(d.target).attr("fill-opacity", 0.8);
+      // let selectedNode = d3.select(d.target);
+      this.cursor.transition()
+          .attr("r", radius)
+          .transition()
+          .attr("display", "none");
     },
     clicked(event) {
       this.mouseMoved.call(this, event);
       this.addNode({x: this.mouse.x, y: this.mouse.y});
     },
-    // 编辑节点
+    // 编辑节点信息
     Openbox(d)
     {
        this.selectedNodeId = d3.select(d.target).attr("index");
@@ -137,7 +156,7 @@ export default {
                   .attr("fill", d => colorList[d.groupId])
                   .attr("fill-opacity", opacity)
                   .attr("index", d => d.index)
-                  .call(enter => enter.transition().attr("r", 20))
+                  .call(enter => enter.transition().attr("r", radius))
                   .call(this.dragger)
                   .on("mouseenter", d => this.mouseEnterNode(d))
                   .on("mouseleave", d => this.mouseLeaveNode(d))
@@ -196,6 +215,8 @@ export default {
 
       this.nodeText.attr('transform', function(d) {
         return 'translate(' + d.x + ',' + d.y + ')';
+
+
       });
     },
     drag(simulation) {
