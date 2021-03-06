@@ -1,15 +1,17 @@
 <template>
   <div>
     <svg id="GraphD3"></svg>
+    <EditNodeBox v-if="isShown" msg="This is a Box" @EditNodeInfo="EditNode"></EditNodeBox>
   </div>
 </template>
 
 <script>
 import * as d3 from 'd3';
+import EditNodeBox from "@/components/EditNodeBox";
 
 var nodes = [{index: 0, label: 'Node 1', groupId: 0},
   {index: 1, label: 'Node 2', groupId: 1},
-  {index: 2, label: 'Node 3', groupId: 2},
+  {index: 2, label: 'Nod e 3', groupId: 2},
   {index: 3, label: 'Node 4', groupId: 3},
   {index: 4, label: 'Node 5', groupId: 4}];
 var edges = [{source: 0, target: 2},
@@ -23,6 +25,7 @@ const colorList = [
   '#BC7CDA',
   '#F385A8',
 ];
+const opacity = 0.8;
 
 export default {
   name: "GraphD3",
@@ -34,14 +37,19 @@ export default {
       node: [],
       link: [],
 
-      mouseLink: [],
-      cursor: {},
       mouse: null,
+      mouseIsSelect: false,
+
+      isShown: false,
+      selectedId: NaN,
 
       svg: {},
       simulation: {},
       dragger: {},
     }
+  },
+  components:{
+    EditNodeBox
   },
   mounted() {
     this.initialGraph(nodes, edges);
@@ -52,7 +60,8 @@ export default {
           .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
           .on("mouseleave", this.mouseLeft)
           .on("mousemove", this.mouseMoved)
-          .on("click", this.clicked);
+          .on("click", this.clicked)
+          .on("dbcklick", this.addInfo);
 
       this.simulation = d3.forceSimulation(nodes)
           .force("charge", d3.forceManyBody().strength(-800))
@@ -65,7 +74,6 @@ export default {
       this.dragger = this.drag(this.simulation);
 
       this.link = this.svg.append("g")
-          .attr("stroke", "#666")
           .selectAll("line");
 
       this.node = this.svg.append("g")
@@ -83,9 +91,11 @@ export default {
       this.simulation.alpha(0.3).restart();
     },
     mouseEnterNode(d) {
+      this.mouseIsSelect = true;
       d3.select(d.target).attr("fill-opacity", 1);
     },
     mouseLeaveNode(d) {
+      this.mouseIsSelect = false;
       d3.select(d.target).attr("fill-opacity", 0.8);
     },
     clicked(event) {
@@ -93,52 +103,65 @@ export default {
       this.addNode({x: this.mouse.x, y: this.mouse.y});
     },
 
-    addNode(source) {
-      if(this.$store.state.clickPath[0] == "0") {
-        nodes.push({x: source.x, y: source.y, groupId: parseInt(this.$store.state.clickPath[1][2])});
-        // console.log(nodes, this.$store.state.clickPath[1][2])
-        this.node = this.node
-            .data(nodes)
-            .join(
-                enter => enter.append("circle").attr("r", 0).attr("fill", d => colorList[d.groupId]).attr("fill-opacity", 0.8)
-                    .call(enter => enter.transition().attr("r", 20))
-                    .call(this.dragger)
-                    .on("mouseenter", d => this.mouseEnterNode(d))
-                    .on("mouseleave", d => this.mouseLeaveNode(d)),
-                update => update,
-                exit => exit.remove()
-            )
-
-
-
-        this.simulation.nodes(nodes);
-        this.simulation.alpha(1).restart();
-      }
+    Openbox(d)
+    {
+       this.selectedId = d3.select(d.target).attr("index");
+       this.isShown = true;
     },
+
+    EditNode(text){
+      nodes[this.selectedId].label = text;
+      this.isShown = false;
+      console.log(nodes);
+    },
+
+    addNode(source) {
+      if(this.$store.state.clickPath && this.$store.state.clickPath[0] == "0" && !this.mouseIsSelect) {
+        nodes.push({index: nodes.length, groupId: parseInt(this.$store.state.clickPath[1][2]), x: source.x, y: source.y});
+        console.log(nodes);
+      }
+
+      this.drawNodes();
+
+      this.simulation.nodes(nodes);
+      this.simulation.alpha(1).restart();
+    },
+    drawNodes() {
+      this.node = this.node
+          .data(nodes)
+          .join(
+              enter => enter.append("circle").attr("r", 0)
+                  .attr("fill", d => colorList[d.groupId])
+                  .attr("fill-opacity", opacity)
+                  .attr("index", d => d.index)
+                  .call(enter => enter.transition().attr("r", 20))
+                  .call(this.dragger)
+                  .on("mouseenter", d => this.mouseEnterNode(d))
+                  .on("mouseleave", d => this.mouseLeaveNode(d))
+                  .on("dblclick", d => this.Openbox(d)),
+              update => update,
+              exit => exit.remove()
+          )
+    },
+
     addLink() {
-      this.link = this.link
-          .data(edges)
-          .join("line");
+      this.drawLinks();
 
       this.simulation.force("link").links(edges);
       this.simulation.alpha(1).restart();
     },
-    updateGraph() {
+    drawLinks() {
       this.link = this.link
           .data(edges)
-          .join("line");
-
-      this.node = this.node
-          .data(nodes)
           .join(
-              enter => enter.append("circle").attr("r", 0).attr("fill", d => colorList[d.groupId]).attr("fill-opacity", 0.8)
-                  .call(enter => enter.transition().attr("r", 20))
-                  .call(this.dragger)
-                  .on("mouseenter", d => this.mouseEnterNode(d))
-                  .on("mouseleave", d => this.mouseLeaveNode(d)),
-              update => update,
-              exit => exit.remove()
+              enter => enter.append("line").attr("stroke", "#666").attr("stroke-width", 3).attr("stroke-opacity", opacity)
           );
+    },
+
+    updateGraph() {
+      this.drawLinks();
+
+      this.drawNodes();
 
       this.simulation.nodes(nodes);
       this.simulation.force("link").links(edges);
