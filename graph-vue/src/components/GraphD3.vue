@@ -11,7 +11,7 @@ import EditNodeBox from "@/components/EditNodeBox";
 
 var nodes = [{index: 0, label: 'Node 1', groupId: 0},
   {index: 1, label: 'Node 2', groupId: 1},
-  {index: 2, label: 'Nod e 3', groupId: 2},
+  {index: 2, label: 'Node 3', groupId: 2},
   {index: 3, label: 'Node 4', groupId: 3},
   {index: 4, label: 'Node 5', groupId: 4}];
 var edges = [{source: 0, target: 2},
@@ -76,9 +76,10 @@ export default {
 
       this.link = this.svg.append("g")
           .selectAll("line");
-
       this.node = this.svg.append("g")
           .selectAll("circle");
+      this.nodetext = this.svg.append("g")
+          .selectAll("text");
 
       this.updateGraph();
     },
@@ -141,7 +142,18 @@ export default {
                   .on("dblclick", d => this.Openbox(d)),
               update => update,
               exit => exit.remove()
-          )
+          );
+      this.nodetext = this.nodetext
+          .data(nodes)
+          .join(
+              enter => enter.append("text").attr("text-anchor","middle")
+                  .text(function (d){
+                    return d.label
+                  })
+                  .call(this.dragger),
+              update => update,
+              exit => exit.remove()
+          );
     },
     // 边绘制相关
     addLink() {
@@ -176,6 +188,10 @@ export default {
           .attr("y1", d => d.source.y)
           .attr("x2", d => d.target.x)
           .attr("y2", d => d.target.y);
+
+      this.nodetext.attr('transform', function(d) {
+        return 'translate(' + d.x + ',' + d.y + ')';
+      });
     },
     drag(simulation) {
       function dragStarted(event) {
