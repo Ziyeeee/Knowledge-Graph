@@ -1,7 +1,11 @@
 <template>
   <div>
-    <svg id="GraphD3"></svg>
-    <EditNodeBox v-if="isShown" msg="This is a Box" @EditNodeInfo="EditNode"></EditNodeBox>
+    <div style="z-index: 1">
+      <svg id="GraphD3"></svg>
+    </div>
+    <div class="edit-node-box">
+      <EditNodeBox v-if="isShown" msg="This is a Box" @EditNodeInfo="EditNode"></EditNodeBox>
+    </div>
   </div>
 </template>
 
@@ -115,10 +119,11 @@ export default {
           .attr("fill", colorList[this.selectedNode.groupId])
           .attr("fill-opacity", 0.2)
           .attr("stroke", colorList[this.selectedNode.groupId])
+          .attr("stroke-opacity", 0.4)
           .attr("cx", this.selectedNode.x)
           .attr("cy", this.selectedNode.y)
           .transition()
-          .attr("r", radius * 2.5);
+          .attr("r", radius * 3);
     },
     mouseLeaveNode() {
       this.mouseIsSelect = false;
@@ -276,7 +281,7 @@ export default {
 
       function inRange({x: sx, y: sy}, {x: tx, y: ty}) {
         let distance = Math.hypot(sx - tx, sy - ty);
-        return distance <= radius * 3.5 && distance > radius;
+        return distance <= radius * 4 && distance > radius;
       }
 
       function linkNotExist(source, target){
@@ -303,5 +308,13 @@ export default {
   #GraphD3{
     width: 800px;
     height: 600px;
+  }
+  .edit-node-box{
+    width: 800px;
+    height: 600px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
   }
 </style>
