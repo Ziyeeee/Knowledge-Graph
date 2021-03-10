@@ -3,8 +3,30 @@
     <div id="GraphLayer" style="z-index: 1">
       <svg id="GraphD3"></svg>
     </div>
-    <EditNodeBox id="Box" v-if="isShown" msg="This is a Box" @EditNodeInfo="EditNode"></EditNodeBox>
-  </div>
+      <EditNodeBox id="EditNodeBox" :dialogVisible="this.isVisible" msg="This is a Box" :nodeText="this.selectedNode.label" @EditNodeInfo="EditNode"></EditNodeBox>
+
+      <div id="SvgSetBox" style="float: right">
+        <ul class="toolbar">
+          <li>
+            <a href="javascript:;" @click="zoomIn"><span><i class="el-icon-zoom-in"></i>放大</span></a>
+          </li>
+          <li>
+            <a href="javascript:;" @click="zoomOut"><span><i class="el-icon-zoom-out"></i>缩小</span></a>
+          </li>
+          <li>
+            <a href="javascript:;" @click="refresh"><span><i class="el-icon-refresh-right"></i>还原</span></a>
+          </li>
+          <li>
+            <a v-if="!isFullScreen" id="fullscreenbtn" href="javascript:;" @click="showFullScreen">
+              <span><i class="el-icon-full-screen"></i>全屏</span>
+            </a>
+            <a v-else id="fullscreenbtn" href="javascript:;" @click="exitFullScreen">
+              <span><i class="el-icon-full-screen"></i>退出全屏</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
 </template>
 
 <script>
@@ -38,6 +60,9 @@ export default {
     return {
       width: 800,
       height:600,
+      zoom: null,
+      isFullScreen: false,
+      isVisible: false,
 
       data: {nodes: nodes, links: edges},
       node: undefined,
@@ -59,6 +84,7 @@ export default {
   },
   mounted() {
     this.initialGraph(this.data.nodes, this.data.links);
+    console.log(this.isVisible);
   },
   methods:{
     // 初始化图
@@ -97,8 +123,13 @@ export default {
 
       this.dragger = this.drag(this, this.simulation, this.mouseLink, this.data);
 
+      this.zoom = d3.zoom().extent([[0, 0], [this.width, this.height]]).scaleExtent([0.1, 4]).on("zoom", this.zoomed);
+      this.svg.call(this.zoom);
+      this.svg.on("dblclick.zoom",null);
+
       this.updateGraph();
     },
+
     // 鼠标事件
     mouseLeft() {
       this.mouse = null;
@@ -141,17 +172,13 @@ export default {
     Openbox(d)
     {
        this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
-       this.isShown = true;
-       // d3.select("#Graph").append("div").attr("id", "BoxLayer")
-       //     .append("edit_node_box")
+       this.isVisible = true;
+       console.log(this.isVisible);
     },
     EditNode(nodeLabel){
       this.selectedNode.label = nodeLabel;
-      this.isShown = false;
-      d3.select("#BoxLayer").attr("z-index", null);
       this.drawNodeText();
       console.log(this.data.nodes);
-      
     },
     // 节点绘制相关
     addNode(source) {
@@ -309,6 +336,35 @@ export default {
           .on("drag", dragged)
           .on("end", dragEnded);
     },
+
+    //编辑视图
+     zoomed({transform}) {
+      this.svg.attr("transform", transform);
+     },
+    zoomClick(direction) {
+      var factor = 0.2
+      var targetZoom = 1
+      var extent = this.zoom.scaleExtent()
+      targetZoom = 1 + factor * direction
+      if (targetZoom < extent[0] || targetZoom > extent[1]) {
+        return false}
+      this.zoom.scaleBy(this.svg, targetZoom) // 执行该方法后 会触发zoom事件
+    },
+    zoomIn() {
+      this.zoomClick(1)
+    },
+    zoomOut() {
+      this.zoomClick(-1)
+    },
+    refresh() {
+      this.svg.call(this.zoom.transform, d3.zoomIdentity)
+    },
+    showFullScreen(){
+
+    },
+    exitFullScreen(){
+
+    },
   },
 }
 </script>
@@ -318,13 +374,22 @@ export default {
     width: 800px;
     height: 600px;
   }
-  #Box{
+  #EditNodeBox{
     /*width: 800px;*/
     /*height: 600px;*/
     position: absolute;
     top: 50%;
     left: 50%;
-    margin: -200px 0 0 -200px;
     z-index: 2;
+  }
+  #SvgSetBox{
+    /*height: 46px;*/
+    /*!*line-height: 46px;*!*/
+    /*padding-left: 15px;*/
+    color: #7f7f7f;
+    background: #f7f7f7;
+    /*top: 50%;*/
+    /*left: 50%;*/
+    /*margin: -200px 0 0 -200px;*/
   }
 </style>

@@ -1,6 +1,5 @@
 <template>
-  <div id="box">
-    <el-card id="card" style="width: 400px; height: 200px">
+  <el-dialog :visible.sync="dialogVisible">
       <div slot="header" class="clearfix">
         <span>节点信息</span>
       </div>
@@ -8,17 +7,16 @@
         <tr>
           <td>节点名称</td>
           <td>
-            <el-input placeholder="请输入节点名称" v-model="label" @keydown.enter.native="getInfo"></el-input>
+            <el-input  :placeholder="!this.nodeText?'请输入节点信息':this.nodeText" v-model="label" @keydown.enter.native="getInfo"></el-input>
           </td>
         </tr>
         <tr>
-          <td colspan="2">
+          <span slot="footer" class="dialog-footer">
             <el-button style="width: 300px" type="primary" @click="getInfo">确定</el-button>
-          </td>
+          </span>
         </tr>
       </table>
-    </el-card>
-  </div>
+  </el-dialog>
 
 </template>
 
@@ -26,18 +24,23 @@
 export default {
   name: "EditNodeBox",
   props:{
-    msg: String
+    msg: String,
+    dialogVisible: Boolean,
+    nodeText: String,
   },
   data(){
     return{
       label:'',
     }
   },
+  mounted() {
+    console.log(this.dialogVisible);
+  },
   methods:{
     getInfo(){
-      const label = this.label;
-      console.log(label);
-      this.$emit("EditNodeInfo",this.label);
+      const label = !this.label ? this.nodeText :this.label;
+      this.dialogVisible = false;
+      this.$emit("EditNodeInfo",label);
     }
   }
 }
