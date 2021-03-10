@@ -22,16 +22,16 @@
 import * as d3 from 'd3';
 import EditNodeBox from "@/components/EditNodeBox";
 
-var nodes = [{index: 0, label: 'Node 1', groupId: 0},
-  {index: 1, label: 'Node 2', groupId: 1},
-  {index: 2, label: 'Node 3', groupId: 2},
-  {index: 3, label: 'Node 4', groupId: 3},
-  {index: 4, label: 'Node 5', groupId: 4}];
-var edges = [{source: 0, target: 2},
-  {source: 0, target: 1},
-  {source: 1, target: 3},
-  {source: 1, target: 3},
-  {source: 1, target: 4}];
+// var nodes = [{index: 0, label: 'Node 1', groupId: 0},
+//   {index: 1, label: 'Node 2', groupId: 1},
+//   {index: 2, label: 'Node 3', groupId: 2},
+//   {index: 3, label: 'Node 4', groupId: 3},
+//   {index: 4, label: 'Node 5', groupId: 4}];
+// var edges = [{source: 0, target: 2},
+//   {source: 0, target: 1},
+//   {source: 1, target: 3},
+//   {source: 1, target: 3},
+//   {source: 1, target: 4}];
 const colorList = [
   '#FCFE8B',
   '#B9F385',
@@ -50,7 +50,8 @@ export default {
       width: 800,
       height:600,
 
-      data: {nodes: nodes, links: edges},
+      data: {},
+      // data: {nodes: nodes, links: edges},
       node: undefined,
       link: undefined,
 
@@ -69,46 +70,55 @@ export default {
     }
   },
   mounted() {
-    this.initialGraph(this.data.nodes, this.data.links);
+    this.initialGraph();
   },
   methods:{
     // 初始化图
-    initialGraph(nodes, edges){
-      this.svg = d3.select("#GraphD3")
-          .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
-          .on("mouseleave", this.mouseLeft)
-          .on("mousemove", this.mouseMoved)
-          .on("click", this.clicked)
-          .on("dbcklick", this.addInfo);
+    initialGraph(){
+      const url = "http://127.0.0.1:5000/api/get_data";
+      this.axios.get(url)
+          .then((res) => {
+            this.data = res.data;
+            console.log(res.data);
+            this.svg = d3.select("#GraphD3")
+                .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
+                .on("mouseleave", this.mouseLeft)
+                .on("mousemove", this.mouseMoved)
+                .on("click", this.clicked)
+                .on("dbcklick", this.addInfo);
 
-      this.simulation = d3.forceSimulation(nodes)
-          .force("charge", d3.forceManyBody().strength(-1000))
-          .force("link", d3.forceLink(edges).distance(radius * 5))
-          .force('collide', d3.forceCollide().radius(radius))
-          .force("x", d3.forceX())
-          .force("y", d3.forceY())
-          .on("tick", this.ticked);
+            this.simulation = d3.forceSimulation(this.data.nodes)
+                .force("charge", d3.forceManyBody().strength(-1000))
+                .force("link", d3.forceLink(this.data.links).distance(radius * 5))
+                .force('collide', d3.forceCollide().radius(radius))
+                .force("x", d3.forceX())
+                .force("y", d3.forceY())
+                .on("tick", this.ticked);
 
-      this.link = this.svg.append("g")
-          .selectAll("line");
-      this.mouseLink = this.svg.append("g")
-          .attr("stroke", "#44cef6")
-          .attr("stroke-width", 3)
-          .attr("stroke-dasharray", 5, 10)
-          .selectAll("line");
-      this.cursor = this.svg.append("circle")
-          .attr("display","none")
-          .attr("fill", "none")
-          .attr("stroke-width", 2)
-          .attr("r", radius);
-      this.node = this.svg.append("g")
-          .selectAll("circle");
-      this.nodeText = this.svg.append("g")
-          .selectAll("text");
+            this.link = this.svg.append("g")
+                .selectAll("line");
+            this.mouseLink = this.svg.append("g")
+                .attr("stroke", "#44cef6")
+                .attr("stroke-width", 3)
+                .attr("stroke-dasharray", 5, 10)
+                .selectAll("line");
+            this.cursor = this.svg.append("circle")
+                .attr("display","none")
+                .attr("fill", "none")
+                .attr("stroke-width", 2)
+                .attr("r", radius);
+            this.node = this.svg.append("g")
+                .selectAll("circle");
+            this.nodeText = this.svg.append("g")
+                .selectAll("text");
 
-      this.dragger = this.drag(this, this.simulation, this.mouseLink, this.data);
+            this.dragger = this.drag(this, this.simulation, this.mouseLink, this.data);
 
-      this.updateGraph();
+            this.updateGraph();
+          })
+          .catch((error) => {
+            console.log(error);
+          })
     },
     // 鼠标事件
     mouseLeft() {
@@ -165,10 +175,12 @@ export default {
       
     },
     saveGraph(){
-      const url = "http://127.0.0.1:5000/api/push_data";
+      const url = "http://127.0.0.1:5000/api/post_data";
       const data = {nodes: this.data.nodes, links: this.data.links}
       console.log(data)
       this.axios.post(url, data)
+          .then((res) => console.log(res.data))
+          .catch((error) => console.log(error))
     },
     // 节点绘制相关
     addNode(source) {
