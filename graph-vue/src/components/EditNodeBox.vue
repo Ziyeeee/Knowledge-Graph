@@ -1,10 +1,10 @@
 <template>
   <div id="box">
-    <el-card style="width: 400px">
+    <el-card id="card" style="width: 400px; height: 200px">
       <div slot="header" class="clearfix">
         <span>节点信息</span>
       </div>
-      <table>
+      <table id="table">
         <tr>
           <td>节点名称</td>
           <td>
@@ -24,7 +24,7 @@
 
 <script>
 export default {
-  name: "GetInfo",
+  name: "EditNodeBox",
   props:{
     msg: String
   },

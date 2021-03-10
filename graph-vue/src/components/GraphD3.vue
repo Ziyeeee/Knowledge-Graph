@@ -1,11 +1,9 @@
 <template>
-  <div>
-    <div style="z-index: 1">
+  <div id="Graph">
+    <div id="GraphLayer" style="z-index: 1">
       <svg id="GraphD3"></svg>
     </div>
-    <div class="edit-node-box">
-      <EditNodeBox v-if="isShown" msg="This is a Box" @EditNodeInfo="EditNode"></EditNodeBox>
-    </div>
+    <EditNodeBox id="Box" v-if="isShown" msg="This is a Box" @EditNodeInfo="EditNode"></EditNodeBox>
   </div>
 </template>
 
@@ -31,10 +29,11 @@ const colorList = [
   '#F385A8',
 ];
 const opacity = 1;
-const radius = 20;
+const radius = 30;
 
 export default {
   name: "GraphD3",
+  components: {EditNodeBox},
   data() {
     return {
       width: 800,
@@ -58,9 +57,6 @@ export default {
       dragger: {},
     }
   },
-  components:{
-    EditNodeBox
-  },
   mounted() {
     this.initialGraph(this.data.nodes, this.data.links);
   },
@@ -76,7 +72,7 @@ export default {
 
       this.simulation = d3.forceSimulation(nodes)
           .force("charge", d3.forceManyBody().strength(-1000))
-          .force("link", d3.forceLink(edges).distance(100))
+          .force("link", d3.forceLink(edges).distance(radius * 5))
           .force('collide', d3.forceCollide().radius(20))
           .force("x", d3.forceX())
           .force("y", d3.forceY())
@@ -115,23 +111,27 @@ export default {
     mouseEnterNode(d) {
       this.mouseIsSelect = true;
       this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
-      this.cursor.attr("display", null)
-          .attr("fill", colorList[this.selectedNode.groupId])
-          .attr("fill-opacity", 0.2)
-          .attr("stroke", colorList[this.selectedNode.groupId])
-          .attr("stroke-opacity", 0.4)
-          .attr("cx", this.selectedNode.x)
-          .attr("cy", this.selectedNode.y)
-          .transition()
-          .attr("r", radius * 3);
+      if (this.$store.state.clickPath && this.$store.state.clickPath[0] === "1"){
+        this.cursor.attr("display", null)
+            .attr("fill", colorList[this.selectedNode.groupId])
+            .attr("fill-opacity", 0.2)
+            .attr("stroke", colorList[this.selectedNode.groupId])
+            .attr("stroke-opacity", 0.4)
+            .attr("cx", this.selectedNode.x)
+            .attr("cy", this.selectedNode.y)
+            .transition()
+            .attr("r", radius * 3);
+      }
     },
     mouseLeaveNode() {
       this.mouseIsSelect = false;
       // let selectedNode = d3.select(d.target);
-      this.cursor.transition()
-          .attr("r", radius)
-          .transition()
-          .attr("display", "none");
+      if (this.$store.state.clickPath && this.$store.state.clickPath[0] === "1"){
+        this.cursor.transition()
+            .attr("r", radius)
+            .transition()
+            .attr("display", "none");
+      }
     },
     clicked(event) {
       this.mouseMoved.call(this, event);
@@ -142,17 +142,20 @@ export default {
     {
        this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
        this.isShown = true;
+       // d3.select("#Graph").append("div").attr("id", "BoxLayer")
+       //     .append("edit_node_box")
     },
     EditNode(nodeLabel){
       this.selectedNode.label = nodeLabel;
       this.isShown = false;
+      d3.select("#BoxLayer").attr("z-index", null);
       this.drawNodeText();
       console.log(this.data.nodes);
       
     },
     // 节点绘制相关
     addNode(source) {
-      if(this.$store.state.clickPath && this.$store.state.clickPath[0] == "0" && !this.mouseIsSelect) {
+      if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "0" && !this.mouseIsSelect) {
         this.data.nodes.push({index: this.data.nodes.length, groupId: parseInt(this.$store.state.clickPath[1][2]), x: source.x, y: source.y});
         // console.log(this.data.nodes);
 
@@ -242,10 +245,12 @@ export default {
         if (!event.active) self.simulation.alphaTarget(0.3).restart();
         event.subject.fx = event.subject.x;
         event.subject.fy = event.subject.y;
-        self.simulation.force("charge", null)
-            .force("link", null)
-            .force("x", null)
-            .force("y", null);
+        if (self.$store.state.clickPath && self.$store.state.clickPath[0] === "1") {
+          self.simulation.force("charge", null)
+              .force("link", null)
+              .force("x", null)
+              .force("y", null);
+        }
       }
 
       function dragged(event) {
@@ -253,30 +258,34 @@ export default {
         event.subject.fx = event.x;
         event.subject.fy = event.y;
 
-        targetNodes = self.data.nodes.filter(node => inRange({x: event.x, y: event.y}, node)).filter(node => linkNotExist(event.subject.index, node.index))
-        self.mouseLink = self.mouseLink
-            .data(targetNodes)
-            .join("line")
-            .attr("x1", event.x)
-            .attr("y1", event.y)
-            .attr("x2", d => d.x)
-            .attr("y2", d => d.y);
+        if (self.$store.state.clickPath && self.$store.state.clickPath[0] === "1"){
+          targetNodes = self.data.nodes.filter(node => inRange({x: event.x, y: event.y}, node)).filter(node => linkNotExist(event.subject.index, node.index))
+          self.mouseLink = self.mouseLink
+              .data(targetNodes)
+              .join("line")
+              .attr("x1", event.x)
+              .attr("y1", event.y)
+              .attr("x2", d => d.x)
+              .attr("y2", d => d.y);
+        }
       }
 
       function dragEnded(event) {
         if (!event.active) self.simulation.alphaTarget(0);
         event.subject.fx = null;
         event.subject.fy = null;
-        self.simulation.force("charge", d3.forceManyBody().strength(-1000))
-            .force("link", d3.forceLink(self.data.links).distance(100))
-            .force("x", d3.forceX())
-            .force("y", d3.forceY());
 
-        self.mouseLink = self.mouseLink
-            .data([])
-            .join("line");
-        // console.log(event.subject.index);
-        self.addLink(event.subject.index, targetNodes);
+        if (self.$store.state.clickPath && self.$store.state.clickPath[0] === "1"){
+          self.simulation.force("charge", d3.forceManyBody().strength(-1000))
+              .force("link", d3.forceLink(self.data.links).distance(100))
+              .force("x", d3.forceX())
+              .force("y", d3.forceY());
+          self.mouseLink = self.mouseLink
+              .data([])
+              .join("line");
+          // console.log(event.subject.index);
+          self.addLink(event.subject.index, targetNodes);
+        }
       }
 
       function inRange({x: sx, y: sy}, {x: tx, y: ty}) {
@@ -309,12 +318,13 @@ export default {
     width: 800px;
     height: 600px;
   }
-  .edit-node-box{
-    width: 800px;
-    height: 600px;
+  #Box{
+    /*width: 800px;*/
+    /*height: 600px;*/
     position: absolute;
     top: 50%;
     left: 50%;
+    margin: -200px 0 0 -200px;
     z-index: 2;
   }
 </style>

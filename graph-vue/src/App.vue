@@ -28,7 +28,24 @@ export default {
     Header,
     Aside,
     MainPage
-  }
+  },
+  mounted() {
+    this.ping();
+  },
+  methods: {
+    ping() {
+      // 使用 axios 向 flask 发送请求
+      const url = "http://127.0.0.1:5000/api/ping";
+      this.axios.get(url)
+          .then((res) => {
+            console.log(res.data);
+          })
+          .catch((error) => {
+            console.log(error);
+          })
+    }
+
+  },
 }
 </script>
 

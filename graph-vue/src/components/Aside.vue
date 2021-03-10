@@ -31,30 +31,14 @@
           </el-menu-item>
         </el-menu-item-group>
       </el-submenu>
-      <el-submenu index="2">
-        <template slot="title">
-          <i class="el-icon-plus"></i>
-          <span slot="title">添加关系</span>
-        </template>
-        <el-menu-item-group>
-          <el-menu-item index="2-1">
-            <i class="el-icon-eleme"></i>
-            <span>继承关系</span>
-          </el-menu-item>
-          <el-menu-item index="2-2">
-            <i class="el-icon-eleme"></i>
-            <span>组合关系</span>
-          </el-menu-item>
-          <el-menu-item index="2-3">
-            <i class="el-icon-eleme"></i>
-            <span>关联关系</span>
-          </el-menu-item>
-          <el-menu-item index="2-4">
-            <i class="el-icon-eleme"></i>
-            <span>属性关系</span>
-          </el-menu-item>
-        </el-menu-item-group>
-      </el-submenu>
+      <el-menu-item class="el-submenu" index="1">
+        <i class="el-icon-plus"></i>
+        <span slot="title">添加关系</span>
+      </el-menu-item>
+      <el-menu-item class="el-submenu" index="3">
+        <i class="el-icon-folder"></i>
+        <span slot="title">保存</span>
+      </el-menu-item>
     </el-menu>
   </el-aside>
 </template>
@@ -101,4 +85,5 @@ export default {
     background-color: #dddddd;
     color: #824D56;
   }
+
 </style>
