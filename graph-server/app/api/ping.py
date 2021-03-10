@@ -1,8 +1,9 @@
-from flask import jsonify
+from flask import make_response
 from app.api import bp
 
 
 @bp.route('/ping', methods=['GET'])
 def ping():
-    """测试 API 是否通"""
-    return jsonify('Test API pass！')
+    response = make_response('Ping success!')
+    response.mimetype = 'text/plain'
+    return response
