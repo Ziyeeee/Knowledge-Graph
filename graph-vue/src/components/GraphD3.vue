@@ -3,6 +3,17 @@
     <div id="GraphLayer" style="z-index: 1">
       <svg id="GraphD3"></svg>
     </div>
+    <div id="EditBar">
+      <el-button>
+        <i class="el-icon-refresh-left"> 撤销</i>
+      </el-button>
+      <el-button>
+        <i class="el-icon-refresh-right"> 恢复</i>
+      </el-button>
+      <el-button>
+        <i class="el-icon-folder" @click="this.saveGraph"> 保存</i>
+      </el-button>
+    </div>
     <EditNodeBox id="Box" v-if="isShown" msg="This is a Box" @EditNodeInfo="EditNode"></EditNodeBox>
   </div>
 </template>
@@ -73,7 +84,7 @@ export default {
       this.simulation = d3.forceSimulation(nodes)
           .force("charge", d3.forceManyBody().strength(-1000))
           .force("link", d3.forceLink(edges).distance(radius * 5))
-          .force('collide', d3.forceCollide().radius(20))
+          .force('collide', d3.forceCollide().radius(radius))
           .force("x", d3.forceX())
           .force("y", d3.forceY())
           .on("tick", this.ticked);
@@ -152,6 +163,12 @@ export default {
       this.drawNodeText();
       console.log(this.data.nodes);
       
+    },
+    saveGraph(){
+      const url = "http://127.0.0.1:5000/api/push_data";
+      const data = {nodes: this.data.nodes, links: this.data.links}
+      console.log(data)
+      this.axios.post(url, data)
     },
     // 节点绘制相关
     addNode(source) {
@@ -318,6 +335,12 @@ export default {
     width: 800px;
     height: 600px;
   }
+  #EditBar{
+    position: absolute;
+    top: 80px;
+    left: 200px;
+    margin: 10px;
+  }
   #Box{
     /*width: 800px;*/
     /*height: 600px;*/
@@ -325,6 +348,6 @@ export default {
     top: 50%;
     left: 50%;
     margin: -200px 0 0 -200px;
-    z-index: 2;
+    z-index: 3;
   }
 </style>
