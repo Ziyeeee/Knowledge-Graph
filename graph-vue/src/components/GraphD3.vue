@@ -3,9 +3,8 @@
     <div id="GraphLayer" style="z-index: 1">
       <svg id="GraphD3"></svg>
     </div>
-      <EditNodeBox id="EditNodeBox" :dialogVisible="this.isVisible" msg="This is a Box" :nodeText="this.selectedNode.label" @EditNodeInfo="EditNode"></EditNodeBox>
-
-      <div id="SvgSetBox" style="float: right">
+    <EditNodeBox id="EditNodeBox" :dialogVisible="this.isVisible" msg="This is a Box" :nodeText="this.selectedNode.label" @EditNodeInfo="EditNode"></EditNodeBox>
+    <div id="SvgSetBox" style="float: right">
         <ul class="toolbar">
           <li>
             <a href="javascript:;" @click="zoomIn"><span><i class="el-icon-zoom-in"></i>放大</span></a>
@@ -26,7 +25,7 @@
           </li>
         </ul>
       </div>
-    </div>
+  </div>
 </template>
 
 <script>
@@ -93,8 +92,7 @@ export default {
           .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
           .on("mouseleave", this.mouseLeft)
           .on("mousemove", this.mouseMoved)
-          .on("click", this.clicked)
-          .on("dbcklick", this.addInfo);
+          .on("click", this.clicked);
 
       this.simulation = d3.forceSimulation(nodes)
           .force("charge", d3.forceManyBody().strength(-1000))
@@ -178,7 +176,7 @@ export default {
     EditNode(nodeLabel){
       this.selectedNode.label = nodeLabel;
       this.drawNodeText();
-      console.log(this.data.nodes);
+      this.isVisible = false;
     },
     // 节点绘制相关
     addNode(source) {

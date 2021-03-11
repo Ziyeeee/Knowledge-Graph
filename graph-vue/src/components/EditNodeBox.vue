@@ -1,21 +1,12 @@
 <template>
-  <el-dialog :visible.sync="dialogVisible">
-      <div slot="header" class="clearfix">
-        <span>节点信息</span>
-      </div>
-      <table id="table">
-        <tr>
-          <td>节点名称</td>
-          <td>
-            <el-input  :placeholder="!this.nodeText?'请输入节点信息':this.nodeText" v-model="label" @keydown.enter.native="getInfo"></el-input>
-          </td>
-        </tr>
-        <tr>
-          <span slot="footer" class="dialog-footer">
-            <el-button style="width: 300px" type="primary" @click="getInfo">确定</el-button>
-          </span>
-        </tr>
-      </table>
+  <el-dialog :visible.sync="dialogVisible" title="节点信息" append-to-body="true" :before-close="getInfo" center>
+    <el-row>
+      <el-col :span="6">节点名称</el-col>
+      <el-col :span="18"><el-input  :placeholder="!nodeText?'请输入节点信息':nodeText" v-model="label" @keydown.enter.native="getInfo"></el-input></el-col>
+    </el-row>
+    <span slot="footer" class="dialog-footer">
+      <el-button style="width: 300px" type="primary" @click="getInfo">确定</el-button>
+    </span>
   </el-dialog>
 
 </template>
@@ -33,13 +24,9 @@ export default {
       label:'',
     }
   },
-  mounted() {
-    console.log(this.dialogVisible);
-  },
   methods:{
     getInfo(){
       const label = !this.label ? this.nodeText :this.label;
-      this.dialogVisible = false;
       this.$emit("EditNodeInfo",label);
     }
   }
@@ -47,10 +34,4 @@ export default {
 </script>
 
 <style scoped>
-  #box{
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
 </style>
