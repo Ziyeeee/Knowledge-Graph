@@ -4,33 +4,22 @@
       <svg id="GraphD3"></svg>
     </div>
     <EditNodeBox id="EditNodeBox" :dialogVisible="this.isVisible" msg="This is a Box" :nodeText="this.selectedNode.label" @EditNodeInfo="EditNode"></EditNodeBox>
-    <div id="SvgSetBox" style="float: right">
-        <ul class="toolbar">
-          <li>
-            <a href="javascript:;" @click="zoomIn"><span><i class="el-icon-zoom-in"></i>放大</span></a>
-          </li>
-          <li>
-            <a href="javascript:;" @click="zoomOut"><span><i class="el-icon-zoom-out"></i>缩小</span></a>
-          </li>
-          <li>
-            <a href="javascript:;" @click="refresh"><span><i class="el-icon-refresh-right"></i>还原</span></a>
-          </li>
-          <li>
-            <a v-if="!isFullScreen" id="fullscreenbtn" href="javascript:;" @click="showFullScreen">
-              <span><i class="el-icon-full-screen"></i>全屏</span>
-            </a>
-            <a v-else id="fullscreenbtn" href="javascript:;" @click="exitFullScreen">
-              <span><i class="el-icon-full-screen"></i>退出全屏</span>
-            </a>
-          </li>
-        </ul>
-      </div>
+    <div id="SvgSetBox" style="float: left">
+      <el-row><el-button @click="zoomIn"><i class="el-icon-zoom-in"></i>放大</el-button></el-row>
+      <el-row><el-button @click="zoomOut"><i class="el-icon-zoom-out"></i>缩小</el-button></el-row>
+      <el-row><el-button @click="refresh"><i class="el-icon-refresh-right"></i>还原</el-button></el-row>
+      <el-row>
+        <el-button v-if="!isFullScreen" @click="showFullScreen"><i class="el-icon-full-screen"></i>全屏</el-button>
+        <el-button v-else @click="exitFullScreen" @keyup.space="exitFullScreen"><i class="el-icon-full-screen"></i>退出全屏</el-button>
+      </el-row>
+    </div>
   </div>
 </template>
 
 <script>
 import * as d3 from 'd3';
 import EditNodeBox from "@/components/EditNodeBox";
+
 
 var nodes = [{index: 0, label: 'Node 1', groupId: 0},
   {index: 1, label: 'Node 2', groupId: 1},
@@ -82,12 +71,18 @@ export default {
     }
   },
   mounted() {
+    let that = this;
+    window.onresize = function(){
+      if(!that.checkFull()){
+        that.isFullScreen = false;
+      }
+    };
     this.initialGraph(this.data.nodes, this.data.links);
-    console.log(this.isVisible);
   },
   methods:{
     // 初始化图
     initialGraph(nodes, edges){
+
       this.svg = d3.select("#GraphD3")
           .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
           .on("mouseleave", this.mouseLeft)
@@ -109,7 +104,7 @@ export default {
           .attr("stroke-width", 3)
           .attr("stroke-dasharray", 5, 10)
           .selectAll("line");
-      this.cursor = this.svg.append("circle")
+      this.cursor = this.svg.append("g").append("circle")
           .attr("display","none")
           .attr("fill", "none")
           .attr("stroke-width", 2)
@@ -336,8 +331,8 @@ export default {
     },
 
     //编辑视图
-     zoomed({transform}) {
-      this.svg.attr("transform", transform);
+    zoomed({transform}) {
+      d3.selectAll("g").attr("transform", transform);
      },
     zoomClick(direction) {
       var factor = 0.2
@@ -357,11 +352,40 @@ export default {
     refresh() {
       this.svg.call(this.zoom.transform, d3.zoomIdentity)
     },
+    checkFull() {
+      var isFull = document.mozFullScreen ||
+          document.fullScreen ||
+          document.webkitIsFullScreen ||
+          document.webkitRequestFullScreen ||
+          document.mozRequestFullScreen ||
+          document.msFullscreenEnabled
+      if (isFull === undefined) {
+        isFull = false
+      }
+      return isFull;
+    },
     showFullScreen(){
-
+      this.isFullScreen = true;
+      var element = document.getElementById("Graph");
+      if (element.requestFullscreen) {
+        element.requestFullscreen()
+      } else if (element.mozRequestFullScreen) {
+        element.mozRequestFullScreen()
+      } else if (element.webkitRequestFullscreen) {
+        element.webkitRequestFullscreen()
+      } else if (element.msRequestFullscreen) {
+        element.msRequestFullscreen()
+      }
     },
     exitFullScreen(){
-
+      this.isFullScreen = false;
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen()
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen()
+      }
     },
   },
 }

@@ -1,5 +1,5 @@
 <template>
-  <el-dialog :visible.sync="dialogVisible" title="节点信息" append-to-body="true" :before-close="getInfo" center>
+  <el-dialog :visible.sync="dialogVisible" title="节点信息" :append-to-body="true" :before-close="getInfo" center>
     <el-row>
       <el-col :span="6">节点名称</el-col>
       <el-col :span="18"><el-input  :placeholder="!nodeText?'请输入节点信息':nodeText" v-model="label" @keydown.enter.native="getInfo"></el-input></el-col>
