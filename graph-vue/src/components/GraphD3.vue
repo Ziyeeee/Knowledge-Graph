@@ -1,6 +1,6 @@
 <template>
   <div id="Graph">
-    <div id="GraphLayer" style="z-index: 1">
+    <div id="GraphLayer" style="">
       <svg id="GraphD3"></svg>
     </div>
 
@@ -55,6 +55,7 @@ export default {
       zoom: null,
       isFullScreen: false,
       isVisible: false,
+      timer: false,
 
       data: {},
       // data: {nodes: nodes, links: edges},
@@ -79,9 +80,17 @@ export default {
   mounted() {
   //解决esc键无法触发事件
     let that = this;
+    this.setGraphWindow();
     window.onresize = function(){
       if(!that.checkFull()){
         that.isFullScreen = false;
+      }
+      if(!that.timer){ // 使用节流机制，降低函数被触发的频率
+        that.timer = true;
+        setTimeout(function(){
+          that.setGraphWindow();
+          that.timer = false;
+        },400)
       }
     };
 
@@ -96,6 +105,8 @@ export default {
             this.data = res.data;
             console.log(res.data);
             this.svg = d3.select("#GraphD3")
+                .attr("height", this.height)
+                .attr("width", this.width)
                 .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
                 .on("mouseleave", this.mouseLeft)
                 .on("mousemove", this.mouseMoved)
@@ -136,6 +147,16 @@ export default {
           .catch((error) => {
             console.log(error);
           })
+    },
+
+    setGraphWindow() {
+      this.height = window.innerHeight-80;
+      this.width = window.innerWidth-200;
+      // console.log(this.height, this.width);
+      this.svg = d3.select("#GraphD3")
+          .attr("height", this.height)
+          .attr("width", this.width)
+          .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
     },
 
     // 鼠标事件
@@ -482,11 +503,15 @@ export default {
 </script>
 
 <style scoped>
-  #GraphD3{
-    width: 800px;
-    height: 600px;
+  /*#GraphD3{*/
+  /*  width: 800px;*/
+  /*  height: 600px;*/
+  /*}*/
+  #GraphLayer{
+    z-index: 1;
+    /*border:6px solid #2196F3;*/
+    /*background-color: #ddffff;*/
   }
-
   #SetBar{
     position: absolute;
     top: 80px;
