@@ -61,6 +61,7 @@ export default {
       // data: {nodes: nodes, links: edges},
       node: undefined,
       link: undefined,
+      arrow: undefined,
 
       mouse: undefined,
       mouseIsSelect: false,
@@ -120,8 +121,25 @@ export default {
                 .force("x", d3.forceX())
                 .force("y", d3.forceY())
                 .on("tick", this.ticked);
+
+            this.node = this.svg.append("g")
+                .selectAll("circle");
             this.link = this.svg.append("g")
                 .selectAll("line");
+            this.nodeText = this.svg.append("g")
+                .selectAll("text");
+            this.arrowMaker = this.svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("markerUnits","strokeWidth")
+                .attr("markerWidth", "8")
+                .attr("markerHeight", "8")
+                .attr("refX","9")
+                .attr("refY","6")
+                .attr("viewBox","0 0 12 12")
+                .attr('orient', 'auto')
+                .append("path")
+                .attr("d", "M2,2 L10,6 L2,10 L6,6 L2,2")
+                .attr("fill", "#999")
             this.mouseLink = this.svg.append("g")
                 .attr("stroke", "#44cef6")
                 .attr("stroke-width", 3)
@@ -132,10 +150,7 @@ export default {
                 .attr("fill", "none")
                 .attr("stroke-width", 2)
                 .attr("r", radius);
-            this.node = this.svg.append("g")
-                .selectAll("circle");
-            this.nodeText = this.svg.append("g")
-                .selectAll("text");
+
             this.dragger = this.drag(this, this.simulation, this.mouseLink, this.data);
             
             this.zoom = d3.zoom().extent([[0, 0], [this.width, this.height]]).scaleExtent([0.1, 4]).on("zoom", this.zoomed);
@@ -232,7 +247,7 @@ export default {
         this.deleteNode();
       }
       if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "3"){
-        this.deleteEdge();
+        this.deleteLink();
       }
     },
 
@@ -269,12 +284,7 @@ export default {
         this.simulation.alpha(1).restart();
       }
     },
-    deleteEdge(){
-      if(this.mouseIsSelect) {
-        this.data.links.splice(this.selectedEdge.index, 1);
-        this.updateGraph();
-      }
-    },
+
     deleteNode(){
       if(this.mouseIsSelect){
         this.data.links = this.data.links.filter(item => !(item.source.index === this.selectedNode.index || item.target.index === this.selectedNode.index));
@@ -326,14 +336,21 @@ export default {
       this.simulation.force("link").links(this.data.links);
       this.simulation.alpha(1).restart();
     },
+    deleteLink(){
+      if(this.mouseIsSelect) {
+        this.data.links.splice(this.selectedEdge.index, 1);
+        this.updateGraph();
+      }
+    },
     drawLinks() {
       this.link = this.link
           .data(this.data.links)
           .join(
               enter => enter.append("line")
-                  .attr("stroke", "#666")
+                  .attr("stroke", "#999")
                   .attr("stroke-width", 3)
                   .attr("stroke-opacity", opacity)
+                  .attr("marker-end", "url(#arrow)")
                   .attr("index", d => d.index)
                   .on("mouseenter", d => this.mouseEnterEdge(d))
                   .on("mouseleave",d => this.mouseLeaveEdge(d)),
@@ -357,15 +374,22 @@ export default {
       this.node.attr("cx", d => d.x)
           .attr("cy", d => d.y);
 
-      this.link.attr("x1", d => d.source.x)
-          .attr("y1", d => d.source.y)
-          .attr("x2", d => d.target.x)
-          .attr("y2", d => d.target.y);
+      this.link.attr("x1", d => d.source.x - offsetX(d))
+          .attr("y1", d => d.source.y - offsetY(d))
+          .attr("x2", d => d.target.x + offsetX(d))
+          .attr("y2", d => d.target.y + offsetY(d));
 
       this.nodeText.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
 
       this.cursor.attr("cx", this.cursorNode.x)
           .attr("cy", this.cursorNode.y);
+
+      function offsetX(d){
+        return radius * (d.source.x - d.target.x) / Math.hypot(d.source.x-d.target.x, d.source.y-d.target.y)
+      }
+      function offsetY(d){
+        return radius * (d.source.y - d.target.y) / Math.hypot(d.source.x-d.target.x, d.source.y-d.target.y)
+      }
     },
 
     drag(self) {
