@@ -369,7 +369,7 @@ export default {
     drag(self) {
       let targetNodes = [];
       function dragStarted(event) {
-        console.log(event);
+        // console.log(event);
         if (!event.active) self.simulation.alphaTarget(0.3).restart();
         event.subject.fx = event.subject.x;
         event.subject.fy = event.subject.y;
@@ -386,7 +386,7 @@ export default {
       }
 
       function dragged(event) {
-        console.log(event);
+        // console.log(event);
         event.subject.fx = event.x;
         event.subject.fy = event.y;
 
