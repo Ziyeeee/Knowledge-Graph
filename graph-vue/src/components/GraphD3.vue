@@ -3,6 +3,18 @@
     <div id="GraphLayer" style="z-index: 1">
       <svg id="GraphD3"></svg>
     </div>
+
+    <div id="EditBar">
+      <el-button>
+        <i class="el-icon-refresh-left"> 撤销</i>
+      </el-button>
+      <el-button>
+        <i class="el-icon-refresh-right"> 恢复</i>
+      </el-button>
+      <el-button>
+        <i class="el-icon-folder" @click="this.saveGraph"> 保存</i>
+      </el-button>
+    </div>
     <EditNodeBox id="EditNodeBox" :dialogVisible="this.isVisible" msg="This is a Box" :nodeText="this.selectedNode.label" @EditNodeInfo="EditNode"></EditNodeBox>
     <div id="SvgSetBox" style="float: left">
       <el-row><el-button @click="zoomIn"><i class="el-icon-zoom-in"></i>放大</el-button></el-row>
@@ -21,16 +33,17 @@ import * as d3 from 'd3';
 import EditNodeBox from "@/components/EditNodeBox";
 
 
-var nodes = [{index: 0, label: 'Node 1', groupId: 0},
-  {index: 1, label: 'Node 2', groupId: 1},
-  {index: 2, label: 'Node 3', groupId: 2},
-  {index: 3, label: 'Node 4', groupId: 3},
-  {index: 4, label: 'Node 5', groupId: 4}];
-var edges = [{source: 0, target: 2},
-  {source: 0, target: 1},
-  {source: 1, target: 3},
-  {source: 1, target: 2},
-  {source: 1, target: 4}];
+// var nodes = [{index: 0, label: 'Node 1', groupId: 0},
+//   {index: 1, label: 'Node 2', groupId: 1},
+//   {index: 2, label: 'Node 3', groupId: 2},
+//   {index: 3, label: 'Node 4', groupId: 3},
+//   {index: 4, label: 'Node 5', groupId: 4}];
+// var edges = [{source: 0, target: 2},
+//   {source: 0, target: 1},
+//   {source: 1, target: 3},
+//   {source: 1, target: 3},
+//   {source: 1, target: 4}];
+
 const colorList = [
   '#FCFE8B',
   '#B9F385',
@@ -52,7 +65,8 @@ export default {
       isFullScreen: false,
       isVisible: false,
 
-      data: {nodes: nodes, links: edges},
+      data: {},
+      // data: {nodes: nodes, links: edges},
       node: undefined,
       link: undefined,
 
@@ -72,7 +86,7 @@ export default {
     }
   },
   mounted() {
-    //解决esc键无法触发事件
+  //解决esc键无法触发事件
     let that = this;
     window.onresize = function(){
       if(!that.checkFull()){
@@ -80,51 +94,57 @@ export default {
       }
     };
 
-    this.initialGraph(this.data.nodes, this.data.links);
-    console.log(this.data.links);
+    this.initialGraph();
   },
   methods:{
     // 初始化图
-    initialGraph(nodes, edges){
+    initialGraph(){
+      const url = "http://127.0.0.1:5000/api/get_data";
+      this.axios.get(url)
+          .then((res) => {
+            this.data = res.data;
+            console.log(res.data);
+            this.svg = d3.select("#GraphD3")
+                .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
+                .on("mouseleave", this.mouseLeft)
+                .on("mousemove", this.mouseMoved)
+                .on("click", this.clicked)
+                .on("dbcklick", this.addInfo);
 
-      this.svg = d3.select("#GraphD3")
-          .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
-          .on("mouseleave", this.mouseLeft)
-          .on("mousemove", this.mouseMoved)
-          .on("click", this.clicked);
-
-      this.simulation = d3.forceSimulation(nodes)
-          .force("charge", d3.forceManyBody().strength(-1000))
-          .force("link", d3.forceLink(edges).distance(radius * 5))
-          .force('collide', d3.forceCollide().radius(20))
-          .force("x", d3.forceX())
-          .force("y", d3.forceY())
-          .on("tick", this.ticked);
-
-      this.link = this.svg.append("g")
-          .selectAll("line");
-      this.mouseLink = this.svg.append("g")
-          .attr("stroke", "#44cef6")
-          .attr("stroke-width", 3)
-          .attr("stroke-dasharray", 5, 10)
-          .selectAll("line");
-      this.cursor = this.svg.append("g").append("circle")
-          .attr("display","none")
-          .attr("fill", "none")
-          .attr("stroke-width", 2)
-          .attr("r", radius);
-      this.node = this.svg.append("g")
-          .selectAll("circle");
-      this.nodeText = this.svg.append("g")
-          .selectAll("text");
-
-      this.dragger = this.drag(this, this.simulation, this.mouseLink, this.data);
-
-      this.zoom = d3.zoom().extent([[0, 0], [this.width, this.height]]).scaleExtent([0.1, 4]).on("zoom", this.zoomed);
-      this.svg.call(this.zoom);
-      this.svg.on("dblclick.zoom",null);
-
-      this.updateGraph();
+            this.simulation = d3.forceSimulation(this.data.nodes)
+                .force("charge", d3.forceManyBody().strength(-1000))
+                .force("link", d3.forceLink(this.data.links).distance(radius * 5))
+                .force('collide', d3.forceCollide().radius(radius))
+                .force("x", d3.forceX())
+                .force("y", d3.forceY())
+                .on("tick", this.ticked);
+            this.link = this.svg.append("g")
+                .selectAll("line");
+            this.mouseLink = this.svg.append("g")
+                .attr("stroke", "#44cef6")
+                .attr("stroke-width", 3)
+                .attr("stroke-dasharray", 5, 10)
+                .selectAll("line");
+            this.cursor = this.svg.append("circle")
+                .attr("display","none")
+                .attr("fill", "none")
+                .attr("stroke-width", 2)
+                .attr("r", radius);
+            this.node = this.svg.append("g")
+                .selectAll("circle");
+            this.nodeText = this.svg.append("g")
+                .selectAll("text");
+            this.dragger = this.drag(this, this.simulation, this.mouseLink, this.data);
+            
+            this.zoom = d3.zoom().extent([[0, 0], [this.width, this.height]]).scaleExtent([0.1, 4]).on("zoom", this.zoomed);
+            this.svg.call(this.zoom);
+            this.svg.on("dblclick.zoom",null);
+            
+            this.updateGraph();
+          })
+          .catch((error) => {
+            console.log(error);
+          })
     },
 
     // 鼠标事件
@@ -211,6 +231,15 @@ export default {
       this.selectedNode.label = nodeLabel;
       this.drawNodeText();
       this.isVisible = false;
+    },
+
+    saveGraph(){
+      const url = "http://127.0.0.1:5000/api/post_data";
+      const data = {nodes: this.data.nodes, links: this.data.links}
+      console.log(data)
+      this.axios.post(url, data)
+          .then((res) => console.log(res.data))
+          .catch((error) => console.log(error))
     },
 
     // 节点绘制相关
@@ -463,13 +492,21 @@ export default {
     width: 800px;
     height: 600px;
   }
-  #EditNodeBox{
+
+  #EditBar{
+    position: absolute;
+    top: 80px;
+    left: 200px;
+    margin: 10px;
+  }
+  #Box{
     /*width: 800px;*/
     /*height: 600px;*/
     position: absolute;
     top: 50%;
     left: 50%;
-    z-index: 2;
+    margin: -200px 0 0 -200px;
+    z-index: 3;
   }
   #SvgSetBox{
     /*height: 46px;*/
