@@ -4,27 +4,18 @@
       <svg id="GraphD3"></svg>
     </div>
 
-    <div id="EditBar">
-      <el-button>
-        <i class="el-icon-refresh-left"> 撤销</i>
-      </el-button>
-      <el-button>
-        <i class="el-icon-refresh-right"> 恢复</i>
-      </el-button>
-      <el-button>
-        <i class="el-icon-folder" @click="this.saveGraph"> 保存</i>
-      </el-button>
+    <div id="SetBar">
+      <el-button><i class="el-icon-refresh-left"> 撤销</i></el-button>
+      <el-button><i class="el-icon-refresh-right"> 恢复</i></el-button>
+      <el-button><i class="el-icon-folder" @click="this.saveGraph"> 保存</i></el-button>
+      <el-button @click="zoomIn"><i class="el-icon-zoom-in"></i> 放大</el-button>
+      <el-button @click="zoomOut"><i class="el-icon-zoom-out"></i> 缩小</el-button>
+      <el-button @click="refresh"><i class="el-icon-refresh-right"></i> 还原</el-button>
+      <el-button v-if="!isFullScreen" @click="showFullScreen"><i class="el-icon-full-screen"></i> 全屏</el-button>
+      <el-button v-else @click="exitFullScreen" @keyup.space="exitFullScreen"><i class="el-icon-full-screen"></i> 退出全屏</el-button>
     </div>
     <EditNodeBox id="EditNodeBox" :dialogVisible="this.isVisible" msg="This is a Box" :nodeText="this.selectedNode.label" @EditNodeInfo="EditNode"></EditNodeBox>
-    <div id="SvgSetBox" style="float: left">
-      <el-row><el-button @click="zoomIn"><i class="el-icon-zoom-in"></i>放大</el-button></el-row>
-      <el-row><el-button @click="zoomOut"><i class="el-icon-zoom-out"></i>缩小</el-button></el-row>
-      <el-row><el-button @click="refresh"><i class="el-icon-refresh-right"></i>还原</el-button></el-row>
-      <el-row>
-        <el-button v-if="!isFullScreen" @click="showFullScreen"><i class="el-icon-full-screen"></i>全屏</el-button>
-        <el-button v-else @click="exitFullScreen" @keyup.space="exitFullScreen"><i class="el-icon-full-screen"></i>退出全屏</el-button>
-      </el-row>
-    </div>
+
   </div>
 </template>
 
@@ -496,29 +487,10 @@ export default {
     height: 600px;
   }
 
-  #EditBar{
+  #SetBar{
     position: absolute;
     top: 80px;
     left: 200px;
     margin: 10px;
-  }
-  #Box{
-    /*width: 800px;*/
-    /*height: 600px;*/
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    margin: -200px 0 0 -200px;
-    z-index: 3;
-  }
-  #SvgSetBox{
-    /*height: 46px;*/
-    /*!*line-height: 46px;*!*/
-    /*padding-left: 15px;*/
-    color: #7f7f7f;
-    background: #f7f7f7;
-    /*top: 50%;*/
-    /*left: 50%;*/
-    /*margin: -200px 0 0 -200px;*/
   }
 </style>

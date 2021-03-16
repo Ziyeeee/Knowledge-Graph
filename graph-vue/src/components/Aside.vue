@@ -43,10 +43,6 @@
         <i class="el-icon-delete"></i>
         <span slot="title">删除边</span>
       </el-menu-item>
-      <el-menu-item class="el-submenu" index="4">
-        <i class="el-icon-folder"></i>
-        <span slot="title">保存</span>
-      </el-menu-item>
     </el-menu>
   </el-aside>
 </template>
