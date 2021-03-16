@@ -120,8 +120,7 @@ export default {
                 .force("x", d3.forceX())
                 .force("y", d3.forceY())
                 .on("tick", this.ticked);
-            this.link = this.svg.append("g")
-                .selectAll("line");
+
             this.mouseLink = this.svg.append("g")
                 .selectAll("line");
             this.cursor = this.svg.append('g')
@@ -134,6 +133,9 @@ export default {
                 .selectAll("circle");
             this.nodeText = this.svg.append("g")
                 .selectAll("text");
+            this.link = this.svg.append("g")
+                .selectAll("line");
+
             this.dragger = this.drag(this);
             
             this.zoom = d3.zoom().extent([[0, 0], [this.width, this.height]]).scaleExtent([0.1, 4]).on("zoom", this.zoomed);
@@ -329,7 +331,7 @@ export default {
           .data(this.data.links)
           .join(
               enter => enter.append("line")
-                  .attr("stroke", "#666")
+                  .attr("stroke", "#555")
                   .attr("stroke-width", 3)
                   .attr("stroke-opacity", opacity)
                   .attr("index", d => d.index)
@@ -355,15 +357,22 @@ export default {
       this.node.attr("cx", d => d.x)
           .attr("cy", d => d.y);
 
-      this.link.attr("x1", d => d.source.x)
-          .attr("y1", d => d.source.y)
-          .attr("x2", d => d.target.x)
-          .attr("y2", d => d.target.y);
+      this.link.attr("x1", d => d.source.x - offsetX(d))
+          .attr("y1", d => d.source.y - offsetY(d))
+          .attr("x2", d => d.target.x + offsetX(d))
+          .attr("y2", d => d.target.y + offsetY(d));
 
       this.nodeText.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
 
       this.cursor.attr("cx", this.cursorNode.x)
           .attr("cy", this.cursorNode.y);
+
+      function offsetX(d){
+        return radius * (d.source.x - d.target.x) / Math.hypot(d.source.x-d.target.x, d.source.y-d.target.y)
+      }
+      function offsetY(d){
+        return radius * (d.source.y - d.target.y) / Math.hypot(d.source.x-d.target.x, d.source.y-d.target.y)
+      }
     },
 
     drag(self) {
