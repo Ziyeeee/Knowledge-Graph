@@ -197,10 +197,13 @@ export default {
       this.selectedNode = {};
     },
     mouseEnterEdge(d){
-      this.mouseIsSelect = true;
-      this.selectedEdge = this.data.links[d3.select(d.target).attr("index")];
-      d3.select(d.target).transition()
-          .attr("stroke-width", 8);
+      if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "3"){
+        this.mouseIsSelect = true;
+        this.selectedEdge = this.data.links[d3.select(d.target).attr("index")];
+        d3.select(d.target).transition()
+            .attr("stroke-width", 8);
+      }
+
     },
     mouseLeaveEdge(d){
       this.mouseIsSelect = false;
