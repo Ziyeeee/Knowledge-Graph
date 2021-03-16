@@ -29,13 +29,13 @@ var nodes = [{index: 0, label: 'Node 1', groupId: 0},
 var edges = [{source: 0, target: 2},
   {source: 0, target: 1},
   {source: 1, target: 3},
-  {source: 1, target: 3},
+  {source: 1, target: 2},
   {source: 1, target: 4}];
 const colorList = [
   '#FCFE8B',
   '#B9F385',
   '#75D6C9',
-  '#BC7CDA',
+  '#bc7cda',
   '#F385A8',
 ];
 const opacity = 1;
@@ -63,7 +63,7 @@ export default {
 
       isShown: false,
       selectedNode: {},
-      selectedNodeId: NaN,
+      selectedEdge: {},
 
       svg: {},
       simulation: {},
@@ -71,13 +71,16 @@ export default {
     }
   },
   mounted() {
+    //解决esc键无法触发事件
     let that = this;
     window.onresize = function(){
       if(!that.checkFull()){
         that.isFullScreen = false;
       }
     };
+
     this.initialGraph(this.data.nodes, this.data.links);
+    console.log(this.data.links);
   },
   methods:{
     // 初始化图
@@ -146,36 +149,65 @@ export default {
             .transition()
             .attr("r", radius * 3);
       }
+      if (this.$store.state.clickPath && this.$store.state.clickPath[0] === "2"){
+        this.cursor.attr("display", null)
+            .attr("fill", "#696969")
+            .attr("fill-opacity", 0.2)
+            .attr("stroke", "#696969")
+            .attr("stroke-opacity", 0.4)
+            .attr("cx", this.selectedNode.x)
+            .attr("cy", this.selectedNode.y)
+            .transition()
+            .attr("r", radius * 1.2);
+      }
     },
     mouseLeaveNode() {
       this.mouseIsSelect = false;
+      this.selectedNode = {};
       // let selectedNode = d3.select(d.target);
-      if (this.$store.state.clickPath && this.$store.state.clickPath[0] === "1"){
+      if (this.$store.state.clickPath && (this.$store.state.clickPath[0] === "1" ||this.$store.state.clickPath[0] === "2")){
         this.cursor.transition()
             .attr("r", radius)
             .transition()
-            .attr("display", "none");
+            .attr("display", "none")
       }
     },
-    clicked(event) {
-      this.mouseMoved.call(this, event);
-      this.addNode({x: this.mouse.x, y: this.mouse.y});
+    mouseEnterEdge(d){
+      this.mouseIsSelect = true;
+      this.selectedEdge = this.data.links[d3.select(d.target).attr("index")];
     },
+    mouseLeaveEdge(){
+      this.mouseIsSelect = false;
+      this.selectedEdge = {};
+    },
+    clicked(event) {
+      if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "0"){
+        this.mouseMoved.call(this, event);
+        this.addNode({x: this.mouse.x, y: this.mouse.y});
+      }
+      if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "2"){
+        this.deleteNode();
+      }
+      if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "3"){
+        this.deleteEdge();
+      }
+    },
+
     // 编辑节点信息
     Openbox(d)
     {
        this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
        this.isVisible = true;
-       console.log(this.isVisible);
     },
     EditNode(nodeLabel){
       this.selectedNode.label = nodeLabel;
       this.drawNodeText();
       this.isVisible = false;
     },
+
     // 节点绘制相关
     addNode(source) {
-      if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "0" && !this.mouseIsSelect) {
+      if(!this.mouseIsSelect) {
         this.data.nodes.push({index: this.data.nodes.length, groupId: parseInt(this.$store.state.clickPath[1][2]), x: source.x, y: source.y});
         // console.log(this.data.nodes);
 
@@ -185,11 +217,31 @@ export default {
         this.simulation.alpha(1).restart();
       }
     },
+    deleteEdge(){
+      if(this.mouseIsSelect) {
+        this.data.links.splice(this.selectedEdge.index, 1)
+        this.updateGraph();
+      }
+    },
+    deleteNode(){
+      if(this.mouseIsSelect){
+        for(let i = 0; i < this.data.links.length;){
+          if(this.data.links[i].source.index === this.selectedNode.index || this.data.links[i].target.index === this.selectedNode.index){
+            this.selectedEdge = this.data.links[i];
+            this.deleteEdge();
+          }
+          else i++;
+        }
+        this.data.nodes.splice(this.selectedNode.index, 1);
+        this.updateGraph();
+      }
+    },
     drawNodes() {
       this.node = this.node
           .data(this.data.nodes)
           .join(
-              enter => enter.append("circle").attr("r", 0)
+              enter => enter.append("circle")
+                  .attr("r", 0)
                   .attr("fill", d => colorList[d.groupId])
                   .attr("fill-opacity", opacity)
                   .attr("index", d => d.index)
@@ -208,7 +260,7 @@ export default {
           .data(this.data.nodes)
           .join(
               enter => enter.append("text")
-                  .attr("id", d => d.index)
+                  .attr("index", d => d.index)
                   .attr("text-anchor","middle")
                   .text(d => d.label)
                   .call(this.dragger),
@@ -216,6 +268,7 @@ export default {
               exit => exit.remove()
           );
     },
+
     // 边绘制相关
     addLink(source, targets) {
       for (const target of targets) {
@@ -230,9 +283,17 @@ export default {
       this.link = this.link
           .data(this.data.links)
           .join(
-              enter => enter.append("line").attr("stroke", "#666").attr("stroke-width", 3).attr("stroke-opacity", opacity)
+              enter => enter.append("line")
+                  .attr("stroke", "#666")
+                  .attr("stroke-width", 3)
+                  .attr("stroke-opacity", opacity)
+                  .attr("index", d => d.index)
+                  .on("mouseenter", d => this.mouseEnterEdge(d))
+                  .on("mouseleave",this.mouseLeaveEdge()),
+
           );
     },
+
     // 更新图
     updateGraph() {
       this.drawLinks();
@@ -258,6 +319,7 @@ export default {
       this.cursor.attr("cx", this.selectedNode.x)
           .attr("cy", this.selectedNode.y);
     },
+
     drag(self) {
       let targetNodes = [];
       function dragStarted(event) {
@@ -330,7 +392,7 @@ export default {
           .on("end", dragEnded);
     },
 
-    //编辑视图
+    //编辑视图相关
     zoomed({transform}) {
       d3.selectAll("g").attr("transform", transform);
      },
@@ -388,6 +450,7 @@ export default {
       }
     },
   },
+
 }
 </script>
 
