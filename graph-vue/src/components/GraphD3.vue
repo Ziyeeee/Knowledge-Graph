@@ -64,6 +64,7 @@ export default {
       isShown: false,
       selectedNode: {},
       selectedEdge: {},
+      cursorNode: {},
 
       svg: {},
       simulation: {},
@@ -138,7 +139,9 @@ export default {
     mouseEnterNode(d) {
       this.mouseIsSelect = true;
       this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
+      this.cursorNode = this.selectedNode;
       if (this.$store.state.clickPath && this.$store.state.clickPath[0] === "1"){
+        this.cursorNode = this.selectedNode;
         this.cursor.attr("display", null)
             .attr("fill", colorList[this.selectedNode.groupId])
             .attr("fill-opacity", 0.2)
@@ -150,6 +153,7 @@ export default {
             .attr("r", radius * 3);
       }
       if (this.$store.state.clickPath && this.$store.state.clickPath[0] === "2"){
+        this.cursorNode = this.selectedNode;
         this.cursor.attr("display", null)
             .attr("fill", "#696969")
             .attr("fill-opacity", 0.2)
@@ -158,27 +162,31 @@ export default {
             .attr("cx", this.selectedNode.x)
             .attr("cy", this.selectedNode.y)
             .transition()
-            .attr("r", radius * 1.2);
+            .attr("r", radius * 1.5);
       }
     },
-    mouseLeaveNode() {
+    mouseLeaveNode(d) {
       this.mouseIsSelect = false;
-      this.selectedNode = {};
-      // let selectedNode = d3.select(d.target);
-      if (this.$store.state.clickPath && (this.$store.state.clickPath[0] === "1" ||this.$store.state.clickPath[0] === "2")){
+      if (this.$store.state.clickPath && (this.$store.state.clickPath[0] === "1" || this.$store.state.clickPath[0] === "2")){
         this.cursor.transition()
             .attr("r", radius)
             .transition()
             .attr("display", "none")
+            .on('end', function (){this.cursorNode = {}})
       }
+      this.selectedNode = {};
     },
     mouseEnterEdge(d){
       this.mouseIsSelect = true;
       this.selectedEdge = this.data.links[d3.select(d.target).attr("index")];
+      d3.select(d.target).transition()
+          .attr("stroke-width", 8);
     },
-    mouseLeaveEdge(){
+    mouseLeaveEdge(d){
       this.mouseIsSelect = false;
       this.selectedEdge = {};
+      d3.select(d.target).transition()
+          .attr("stroke-width", 3);
     },
     clicked(event) {
       if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "0"){
@@ -219,20 +227,15 @@ export default {
     },
     deleteEdge(){
       if(this.mouseIsSelect) {
-        this.data.links.splice(this.selectedEdge.index, 1)
+        this.data.links.splice(this.selectedEdge.index, 1);
         this.updateGraph();
       }
     },
     deleteNode(){
       if(this.mouseIsSelect){
-        for(let i = 0; i < this.data.links.length;){
-          if(this.data.links[i].source.index === this.selectedNode.index || this.data.links[i].target.index === this.selectedNode.index){
-            this.selectedEdge = this.data.links[i];
-            this.deleteEdge();
-          }
-          else i++;
-        }
+        this.data.links = this.data.links.filter(item => !(item.source.index === this.selectedNode.index || item.target.index === this.selectedNode.index));
         this.data.nodes.splice(this.selectedNode.index, 1);
+        this.mouseLeaveNode();
         this.updateGraph();
       }
     },
@@ -250,7 +253,7 @@ export default {
                   .on("mouseenter", d => this.mouseEnterNode(d))
                   .on("mouseleave", d => this.mouseLeaveNode(d))
                   .on("dblclick", d => this.Openbox(d)),
-              update => update,
+              update => update.attr("fill", d => colorList[d.groupId]),
               exit => exit.remove()
           );
       this.drawNodeText();
@@ -289,8 +292,9 @@ export default {
                   .attr("stroke-opacity", opacity)
                   .attr("index", d => d.index)
                   .on("mouseenter", d => this.mouseEnterEdge(d))
-                  .on("mouseleave",this.mouseLeaveEdge()),
-
+                  .on("mouseleave",d => this.mouseLeaveEdge(d)),
+              update => update,
+              exit => exit.remove()
           );
     },
 
@@ -316,8 +320,8 @@ export default {
 
       this.nodeText.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
 
-      this.cursor.attr("cx", this.selectedNode.x)
-          .attr("cy", this.selectedNode.y);
+      this.cursor.attr("cx", this.cursorNode.x)
+          .attr("cy", this.cursorNode.y);
     },
 
     drag(self) {
