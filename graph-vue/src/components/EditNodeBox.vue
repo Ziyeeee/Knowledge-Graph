@@ -1,24 +1,13 @@
 <template>
-  <div id="box">
-    <el-card id="card" style="width: 400px; height: 200px">
-      <div slot="header" class="clearfix">
-        <span>节点信息</span>
-      </div>
-      <table id="table">
-        <tr>
-          <td>节点名称</td>
-          <td>
-            <el-input placeholder="请输入节点名称" v-model="label" @keydown.enter.native="getInfo"></el-input>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="2">
-            <el-button style="width: 300px" type="primary" @click="getInfo">确定</el-button>
-          </td>
-        </tr>
-      </table>
-    </el-card>
-  </div>
+  <el-dialog :visible.sync="dialogVisible" title="节点信息" :append-to-body="true" :before-close="getInfo" center>
+    <el-row>
+      <el-col :span="6">节点名称</el-col>
+      <el-col :span="18"><el-input  :placeholder="!nodeText?'请输入节点信息':nodeText" v-model="label" @keydown.enter.native="getInfo"></el-input></el-col>
+    </el-row>
+    <span slot="footer" class="dialog-footer">
+      <el-button style="width: 300px" type="primary" @click="getInfo">确定</el-button>
+    </span>
+  </el-dialog>
 
 </template>
 
@@ -26,7 +15,9 @@
 export default {
   name: "EditNodeBox",
   props:{
-    msg: String
+    msg: String,
+    dialogVisible: Boolean,
+    nodeText: String,
   },
   data(){
     return{
@@ -35,19 +26,12 @@ export default {
   },
   methods:{
     getInfo(){
-      const label = this.label;
-      console.log(label);
-      this.$emit("EditNodeInfo",this.label);
+      const label = !this.label ? this.nodeText :this.label;
+      this.$emit("EditNodeInfo",label);
     }
   }
 }
 </script>
 
 <style scoped>
-  #box{
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
 </style>

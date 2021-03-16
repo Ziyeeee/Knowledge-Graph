@@ -35,6 +35,18 @@
         <i class="el-icon-plus"></i>
         <span slot="title">添加关系</span>
       </el-menu-item>
+      <el-menu-item class="el-submenu" index="2">
+        <i class="el-icon-delete"></i>
+        <span slot="title">删除节点</span>
+      </el-menu-item>
+      <el-menu-item class="el-submenu" index="3">
+        <i class="el-icon-delete"></i>
+        <span slot="title">删除边</span>
+      </el-menu-item>
+      <el-menu-item class="el-submenu" index="4">
+        <i class="el-icon-folder"></i>
+        <span slot="title">保存</span>
+      </el-menu-item>
     </el-menu>
   </el-aside>
 </template>
@@ -54,7 +66,6 @@ export default {
   methods: {
     handleSelect(key, keyPath) {
       this.$store.commit('updateClickType', keyPath);
-      // console.log(this.$store.state.clickPath);
     },
     // handleOpen(key, keyPath) {
     //

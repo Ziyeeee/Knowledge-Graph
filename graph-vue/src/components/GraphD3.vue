@@ -3,6 +3,7 @@
     <div id="GraphLayer" style="z-index: 1">
       <svg id="GraphD3"></svg>
     </div>
+
     <div id="EditBar">
       <el-button>
         <i class="el-icon-refresh-left"> 撤销</i>
@@ -14,13 +15,23 @@
         <i class="el-icon-folder" @click="this.saveGraph"> 保存</i>
       </el-button>
     </div>
-    <EditNodeBox id="Box" v-if="isShown" msg="This is a Box" @EditNodeInfo="EditNode"></EditNodeBox>
+    <EditNodeBox id="EditNodeBox" :dialogVisible="this.isVisible" msg="This is a Box" :nodeText="this.selectedNode.label" @EditNodeInfo="EditNode"></EditNodeBox>
+    <div id="SvgSetBox" style="float: left">
+      <el-row><el-button @click="zoomIn"><i class="el-icon-zoom-in"></i>放大</el-button></el-row>
+      <el-row><el-button @click="zoomOut"><i class="el-icon-zoom-out"></i>缩小</el-button></el-row>
+      <el-row><el-button @click="refresh"><i class="el-icon-refresh-right"></i>还原</el-button></el-row>
+      <el-row>
+        <el-button v-if="!isFullScreen" @click="showFullScreen"><i class="el-icon-full-screen"></i>全屏</el-button>
+        <el-button v-else @click="exitFullScreen" @keyup.space="exitFullScreen"><i class="el-icon-full-screen"></i>退出全屏</el-button>
+      </el-row>
+    </div>
   </div>
 </template>
 
 <script>
 import * as d3 from 'd3';
 import EditNodeBox from "@/components/EditNodeBox";
+
 
 // var nodes = [{index: 0, label: 'Node 1', groupId: 0},
 //   {index: 1, label: 'Node 2', groupId: 1},
@@ -32,11 +43,12 @@ import EditNodeBox from "@/components/EditNodeBox";
 //   {source: 1, target: 3},
 //   {source: 1, target: 3},
 //   {source: 1, target: 4}];
+
 const colorList = [
   '#FCFE8B',
   '#B9F385',
   '#75D6C9',
-  '#BC7CDA',
+  '#bc7cda',
   '#F385A8',
 ];
 const opacity = 1;
@@ -49,6 +61,9 @@ export default {
     return {
       width: 800,
       height:600,
+      zoom: null,
+      isFullScreen: false,
+      isVisible: false,
 
       data: {},
       // data: {nodes: nodes, links: edges},
@@ -62,7 +77,8 @@ export default {
 
       isShown: false,
       selectedNode: {},
-      selectedNodeId: NaN,
+      selectedEdge: {},
+      cursorNode: {},
 
       svg: {},
       simulation: {},
@@ -70,6 +86,14 @@ export default {
     }
   },
   mounted() {
+  //解决esc键无法触发事件
+    let that = this;
+    window.onresize = function(){
+      if(!that.checkFull()){
+        that.isFullScreen = false;
+      }
+    };
+
     this.initialGraph();
   },
   methods:{
@@ -94,7 +118,6 @@ export default {
                 .force("x", d3.forceX())
                 .force("y", d3.forceY())
                 .on("tick", this.ticked);
-
             this.link = this.svg.append("g")
                 .selectAll("line");
             this.mouseLink = this.svg.append("g")
@@ -111,15 +134,19 @@ export default {
                 .selectAll("circle");
             this.nodeText = this.svg.append("g")
                 .selectAll("text");
-
             this.dragger = this.drag(this, this.simulation, this.mouseLink, this.data);
-
+            
+            this.zoom = d3.zoom().extent([[0, 0], [this.width, this.height]]).scaleExtent([0.1, 4]).on("zoom", this.zoomed);
+            this.svg.call(this.zoom);
+            this.svg.on("dblclick.zoom",null);
+            
             this.updateGraph();
           })
           .catch((error) => {
             console.log(error);
           })
     },
+
     // 鼠标事件
     mouseLeft() {
       this.mouse = null;
@@ -132,7 +159,9 @@ export default {
     mouseEnterNode(d) {
       this.mouseIsSelect = true;
       this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
+      this.cursorNode = this.selectedNode;
       if (this.$store.state.clickPath && this.$store.state.clickPath[0] === "1"){
+        this.cursorNode = this.selectedNode;
         this.cursor.attr("display", null)
             .attr("fill", colorList[this.selectedNode.groupId])
             .attr("fill-opacity", 0.2)
@@ -143,37 +172,67 @@ export default {
             .transition()
             .attr("r", radius * 3);
       }
+      if (this.$store.state.clickPath && this.$store.state.clickPath[0] === "2"){
+        this.cursorNode = this.selectedNode;
+        this.cursor.attr("display", null)
+            .attr("fill", "#696969")
+            .attr("fill-opacity", 0.2)
+            .attr("stroke", "#696969")
+            .attr("stroke-opacity", 0.4)
+            .attr("cx", this.selectedNode.x)
+            .attr("cy", this.selectedNode.y)
+            .transition()
+            .attr("r", radius * 1.5);
+      }
     },
-    mouseLeaveNode() {
+    mouseLeaveNode(d) {
       this.mouseIsSelect = false;
-      // let selectedNode = d3.select(d.target);
-      if (this.$store.state.clickPath && this.$store.state.clickPath[0] === "1"){
+      if (this.$store.state.clickPath && (this.$store.state.clickPath[0] === "1" || this.$store.state.clickPath[0] === "2")){
         this.cursor.transition()
             .attr("r", radius)
             .transition()
-            .attr("display", "none");
+            .attr("display", "none")
+            .on('end', function (){this.cursorNode = {}})
       }
+      this.selectedNode = {};
+    },
+    mouseEnterEdge(d){
+      this.mouseIsSelect = true;
+      this.selectedEdge = this.data.links[d3.select(d.target).attr("index")];
+      d3.select(d.target).transition()
+          .attr("stroke-width", 8);
+    },
+    mouseLeaveEdge(d){
+      this.mouseIsSelect = false;
+      this.selectedEdge = {};
+      d3.select(d.target).transition()
+          .attr("stroke-width", 3);
     },
     clicked(event) {
-      this.mouseMoved.call(this, event);
-      this.addNode({x: this.mouse.x, y: this.mouse.y});
+      if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "0"){
+        this.mouseMoved.call(this, event);
+        this.addNode({x: this.mouse.x, y: this.mouse.y});
+      }
+      if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "2"){
+        this.deleteNode();
+      }
+      if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "3"){
+        this.deleteEdge();
+      }
     },
+
     // 编辑节点信息
     Openbox(d)
     {
        this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
-       this.isShown = true;
-       // d3.select("#Graph").append("div").attr("id", "BoxLayer")
-       //     .append("edit_node_box")
+       this.isVisible = true;
     },
     EditNode(nodeLabel){
       this.selectedNode.label = nodeLabel;
-      this.isShown = false;
-      d3.select("#BoxLayer").attr("z-index", null);
       this.drawNodeText();
-      console.log(this.data.nodes);
-      
+      this.isVisible = false;
     },
+
     saveGraph(){
       const url = "http://127.0.0.1:5000/api/post_data";
       const data = {nodes: this.data.nodes, links: this.data.links}
@@ -182,9 +241,10 @@ export default {
           .then((res) => console.log(res.data))
           .catch((error) => console.log(error))
     },
+
     // 节点绘制相关
     addNode(source) {
-      if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "0" && !this.mouseIsSelect) {
+      if(!this.mouseIsSelect) {
         this.data.nodes.push({index: this.data.nodes.length, groupId: parseInt(this.$store.state.clickPath[1][2]), x: source.x, y: source.y});
         // console.log(this.data.nodes);
 
@@ -194,11 +254,26 @@ export default {
         this.simulation.alpha(1).restart();
       }
     },
+    deleteEdge(){
+      if(this.mouseIsSelect) {
+        this.data.links.splice(this.selectedEdge.index, 1);
+        this.updateGraph();
+      }
+    },
+    deleteNode(){
+      if(this.mouseIsSelect){
+        this.data.links = this.data.links.filter(item => !(item.source.index === this.selectedNode.index || item.target.index === this.selectedNode.index));
+        this.data.nodes.splice(this.selectedNode.index, 1);
+        this.mouseLeaveNode();
+        this.updateGraph();
+      }
+    },
     drawNodes() {
       this.node = this.node
           .data(this.data.nodes)
           .join(
-              enter => enter.append("circle").attr("r", 0)
+              enter => enter.append("circle")
+                  .attr("r", 0)
                   .attr("fill", d => colorList[d.groupId])
                   .attr("fill-opacity", opacity)
                   .attr("index", d => d.index)
@@ -207,7 +282,7 @@ export default {
                   .on("mouseenter", d => this.mouseEnterNode(d))
                   .on("mouseleave", d => this.mouseLeaveNode(d))
                   .on("dblclick", d => this.Openbox(d)),
-              update => update,
+              update => update.attr("fill", d => colorList[d.groupId]),
               exit => exit.remove()
           );
       this.drawNodeText();
@@ -217,7 +292,7 @@ export default {
           .data(this.data.nodes)
           .join(
               enter => enter.append("text")
-                  .attr("id", d => d.index)
+                  .attr("index", d => d.index)
                   .attr("text-anchor","middle")
                   .text(d => d.label)
                   .call(this.dragger),
@@ -225,6 +300,7 @@ export default {
               exit => exit.remove()
           );
     },
+
     // 边绘制相关
     addLink(source, targets) {
       for (const target of targets) {
@@ -239,9 +315,18 @@ export default {
       this.link = this.link
           .data(this.data.links)
           .join(
-              enter => enter.append("line").attr("stroke", "#666").attr("stroke-width", 3).attr("stroke-opacity", opacity)
+              enter => enter.append("line")
+                  .attr("stroke", "#666")
+                  .attr("stroke-width", 3)
+                  .attr("stroke-opacity", opacity)
+                  .attr("index", d => d.index)
+                  .on("mouseenter", d => this.mouseEnterEdge(d))
+                  .on("mouseleave",d => this.mouseLeaveEdge(d)),
+              update => update,
+              exit => exit.remove()
           );
     },
+
     // 更新图
     updateGraph() {
       this.drawLinks();
@@ -264,9 +349,10 @@ export default {
 
       this.nodeText.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
 
-      this.cursor.attr("cx", this.selectedNode.x)
-          .attr("cy", this.selectedNode.y);
+      this.cursor.attr("cx", this.cursorNode.x)
+          .attr("cy", this.cursorNode.y);
     },
+
     drag(self) {
       let targetNodes = [];
       function dragStarted(event) {
@@ -338,7 +424,66 @@ export default {
           .on("drag", dragged)
           .on("end", dragEnded);
     },
+
+    //编辑视图相关
+    zoomed({transform}) {
+      d3.selectAll("g").attr("transform", transform);
+     },
+    zoomClick(direction) {
+      var factor = 0.2
+      var targetZoom = 1
+      var extent = this.zoom.scaleExtent()
+      targetZoom = 1 + factor * direction
+      if (targetZoom < extent[0] || targetZoom > extent[1]) {
+        return false}
+      this.zoom.scaleBy(this.svg, targetZoom) // 执行该方法后 会触发zoom事件
+    },
+    zoomIn() {
+      this.zoomClick(1)
+    },
+    zoomOut() {
+      this.zoomClick(-1)
+    },
+    refresh() {
+      this.svg.call(this.zoom.transform, d3.zoomIdentity)
+    },
+    checkFull() {
+      var isFull = document.mozFullScreen ||
+          document.fullScreen ||
+          document.webkitIsFullScreen ||
+          document.webkitRequestFullScreen ||
+          document.mozRequestFullScreen ||
+          document.msFullscreenEnabled
+      if (isFull === undefined) {
+        isFull = false
+      }
+      return isFull;
+    },
+    showFullScreen(){
+      this.isFullScreen = true;
+      var element = document.getElementById("Graph");
+      if (element.requestFullscreen) {
+        element.requestFullscreen()
+      } else if (element.mozRequestFullScreen) {
+        element.mozRequestFullScreen()
+      } else if (element.webkitRequestFullscreen) {
+        element.webkitRequestFullscreen()
+      } else if (element.msRequestFullscreen) {
+        element.msRequestFullscreen()
+      }
+    },
+    exitFullScreen(){
+      this.isFullScreen = false;
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen()
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen()
+      }
+    },
   },
+
 }
 </script>
 
@@ -347,6 +492,7 @@ export default {
     width: 800px;
     height: 600px;
   }
+
   #EditBar{
     position: absolute;
     top: 80px;
@@ -361,5 +507,15 @@ export default {
     left: 50%;
     margin: -200px 0 0 -200px;
     z-index: 3;
+  }
+  #SvgSetBox{
+    /*height: 46px;*/
+    /*!*line-height: 46px;*!*/
+    /*padding-left: 15px;*/
+    color: #7f7f7f;
+    background: #f7f7f7;
+    /*top: 50%;*/
+    /*left: 50%;*/
+    /*margin: -200px 0 0 -200px;*/
   }
 </style>
