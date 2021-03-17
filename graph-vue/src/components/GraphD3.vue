@@ -122,13 +122,21 @@ export default {
                 .force("y", d3.forceY())
                 .on("tick", this.ticked);
 
+            this.mouseLink = this.svg.append("g")
+                .selectAll("line");
+            this.cursor = this.svg.append('g')
+                .append("circle")
+                .attr("display","none")
+                .attr("fill", "none")
+                .attr("stroke-width", 2)
+                .attr("r", radius);
             this.node = this.svg.append("g")
                 .selectAll("circle");
             this.link = this.svg.append("g")
                 .selectAll("line");
             this.nodeText = this.svg.append("g")
                 .selectAll("text");
-            this.arrowMaker = this.svg.append("defs").append("marker")
+            this.arrowMarker = this.svg.append("defs").append("marker")
                 .attr("id", "arrow")
                 .attr("markerUnits","strokeWidth")
                 .attr("markerWidth", "8")
@@ -140,15 +148,6 @@ export default {
                 .append("path")
                 .attr("d", "M2,2 L10,6 L2,10 L6,6 L2,2")
                 .attr("fill", "#999")
-
-            this.mouseLink = this.svg.append("g")
-                .selectAll("line");
-            this.cursor = this.svg.append('g')
-                .append("circle")
-                .attr("display","none")
-                .attr("fill", "none")
-                .attr("stroke-width", 2)
-                .attr("r", radius);
 
             this.dragger = this.drag(this, this.simulation, this.mouseLink, this.data);
             this.zoom = d3.zoom().extent([[0, 0], [this.width, this.height]]).scaleExtent([0.1, 4]).on("zoom", this.zoomed);
