@@ -140,19 +140,17 @@ export default {
                 .append("path")
                 .attr("d", "M2,2 L10,6 L2,10 L6,6 L2,2")
                 .attr("fill", "#999")
+
             this.mouseLink = this.svg.append("g")
-                .attr("stroke", "#44cef6")
-                .attr("stroke-width", 3)
-                .attr("stroke-dasharray", 5, 10)
                 .selectAll("line");
-            this.cursor = this.svg.append("circle")
+            this.cursor = this.svg.append('g')
+                .append("circle")
                 .attr("display","none")
                 .attr("fill", "none")
                 .attr("stroke-width", 2)
                 .attr("r", radius);
 
             this.dragger = this.drag(this, this.simulation, this.mouseLink, this.data);
-            
             this.zoom = d3.zoom().extent([[0, 0], [this.width, this.height]]).scaleExtent([0.1, 4]).on("zoom", this.zoomed);
             this.svg.call(this.zoom);
             this.svg.on("dblclick.zoom",null);
@@ -400,10 +398,14 @@ export default {
         event.subject.fx = event.subject.x;
         event.subject.fy = event.subject.y;
         if (self.$store.state.clickPath && self.$store.state.clickPath[0] === "1") {
+          // self.simulation.force("charge", d3.forceManyBody().strength(-100))
+          //     .force("link", d3.forceLink(self.data.links).distance(200))
           self.simulation.force("charge", null)
               .force("link", null)
               .force("x", null)
               .force("y", null);
+          self.cursor.attr("cx", event.subject.x)
+              .attr("cy", event.subject.y);
         }
       }
 
@@ -415,12 +417,17 @@ export default {
         if (self.$store.state.clickPath && self.$store.state.clickPath[0] === "1"){
           targetNodes = self.data.nodes.filter(node => inRange({x: event.x, y: event.y}, node)).filter(node => linkNotExist(event.subject.index, node.index))
           self.mouseLink = self.mouseLink
+              .attr("stroke", "#44cef6")
+              .attr("stroke-width", 3)
+              .attr("stroke-dasharray", 5, 10)
               .data(targetNodes)
               .join("line")
               .attr("x1", event.x)
               .attr("y1", event.y)
               .attr("x2", d => d.x)
               .attr("y2", d => d.y);
+          self.cursor.attr("cx", event.x)
+              .attr("cy", event.y);
         }
       }
 
@@ -431,7 +438,7 @@ export default {
 
         if (self.$store.state.clickPath && self.$store.state.clickPath[0] === "1"){
           self.simulation.force("charge", d3.forceManyBody().strength(-1000))
-              .force("link", d3.forceLink(self.data.links).distance(100))
+              .force("link", d3.forceLink(self.data.links).distance(radius * 5))
               .force("x", d3.forceX())
               .force("y", d3.forceY());
           self.mouseLink = self.mouseLink
