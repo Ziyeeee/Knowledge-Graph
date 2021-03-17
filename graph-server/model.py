@@ -30,7 +30,6 @@ def json2neo(data, graph):
     kg = Subgraph(nodes)
 
     for link_json in data["links"]:
-        print(link_json['source'])
         link = Relationship(nodes[link_json['source']], 'links', nodes[link_json['target']])
         kg = kg | link
 
