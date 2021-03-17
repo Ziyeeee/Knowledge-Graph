@@ -104,7 +104,7 @@ export default {
       this.axios.get(url)
           .then((res) => {
             this.data = res.data;
-            console.log(res.data);
+            // console.log(res.data);
             this.svg = d3.select("#GraphD3")
                 .attr("height", this.height)
                 .attr("width", this.width)
@@ -129,25 +129,26 @@ export default {
                 .attr("stroke-width", 2)
                 .attr("r", radius);
             this.link = this.svg.append("g")
-                .selectAll("line");
+                .selectAll("path");
             this.mouseLink = this.svg.append("g")
                 .selectAll("line");
             this.node = this.svg.append("g")
                 .selectAll("circle");
             this.nodeText = this.svg.append("g")
                 .selectAll("text");
-            this.arrowMarker = this.svg.append("defs").append("marker")
+            this.svg.append("defs").append("marker")
                 .attr("id", "arrow")
-                .attr("markerUnits","strokeWidth")
-                .attr("markerWidth", "8")
-                .attr("markerHeight", "8")
-                .attr("refX","9")
-                .attr("refY","6")
-                .attr("viewBox","0 0 12 12")
-                .attr('orient', 'auto')
+                .attr("markerUnits","userSpaceOnUse")
+                .attr("viewBox", "0 0 12 12")
+                .attr("refX", 10)
+                .attr("refY", 6)
+                .attr("markerWidth", 26)//标识的大小
+                .attr("markerHeight", 26)
+                .attr("orient", "auto")//绘制方向，可设定为：auto（自动确认方向）和 角度值
+                .attr("stroke-width",2)//箭头宽度
                 .append("path")
-                .attr("d", "M2,2 L10,6 L2,10 L6,6 L2,2")
-                .attr("fill", "#999")
+                .attr("d", "M2,2 L10,6 L2,10 L6,6 L2,2")//箭头的路径
+                .attr('fill',"#666");//箭头颜色
 
             this.dragger = this.drag(this, this.simulation, this.mouseLink, this.data);
             this.zoom = d3.zoom().extent([[0, 0], [this.width, this.height]]).scaleExtent([0.1, 4]).on("zoom", this.zoomed);
@@ -226,7 +227,7 @@ export default {
         this.selectedEdge = this.data.links[d3.select(d.target).attr("index")];
         d3.select(d.target).transition()
             .attr("stroke-width", 8);
-        console.log(d.target, d3.select(d.target))
+        // console.log(d.target, d3.select(d.target))
       }
 
     },
@@ -333,7 +334,6 @@ export default {
 
       this.simulation.force("link").links(this.data.links);
       this.simulation.alpha(1).restart();
-      console.log(this.data.links);
     },
     deleteLink(){
       if(this.mouseIsSelect) {
@@ -347,7 +347,8 @@ export default {
       this.link = this.link
           .data(this.data.links)
           .join(
-              enter => enter.append("line")
+              enter => enter.append("path")
+                  .attr("fill", "none")
                   .attr("stroke", "#999")
                   .attr("stroke-width", 3)
                   .attr("stroke-opacity", opacity)
@@ -375,15 +376,23 @@ export default {
       this.node.attr("cx", d => d.x)
           .attr("cy", d => d.y);
 
-      this.link.attr("x1", d => d.source.x - offsetX(d))
-          .attr("y1", d => d.source.y - offsetY(d))
-          .attr("x2", d => d.target.x + offsetX(d))
-          .attr("y2", d => d.target.y + offsetY(d));
+      this.link.attr("d", d => this.linkArc(d))
 
       this.nodeText.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
 
       this.cursor.attr("cx", this.cursorNode.x)
           .attr("cy", this.cursorNode.y);
+    },
+    linkArc(d){
+      if(this.linkNotExist(d.source.index, d.target.index) || this.linkNotExist(d.target.index, d.source.index)) {
+        return 'M ' + (d.source.x - offsetX(d)) + ' ' + (d.source.y - offsetY(d))+' L '+ (d.target.x + offsetX(d)) +' '+ (d.target.y + offsetY(d));
+      }
+      else{
+        var dx = d.target.x - d.source.x + 2 * offsetX(d),
+            dy = d.target.y - d.source.y + 2 * offsetY(d),
+            dr = Math.sqrt(dx*dx+dy*dy) * 1.2;
+        return 'M ' + (d.source.x - offsetX(d)) + ' ' + (d.source.y - offsetY(d)) + 'A' + dr + ',' + dr + ' 0 0,1 ' + (d.target.x + offsetX(d)) + ',' + (d.target.y + offsetY(d));
+      }
 
       function offsetX(d){
         return radius * (d.source.x - d.target.x) / Math.hypot(d.source.x-d.target.x, d.source.y-d.target.y)
@@ -418,7 +427,7 @@ export default {
         event.subject.fy = event.y;
 
         if (self.$store.state.clickPath && self.$store.state.clickPath[0] === "1"){
-          targetNodes = self.data.nodes.filter(node => inRange({x: event.x, y: event.y}, node)).filter(node => linkNotExist(event.subject.index, node.index))
+          targetNodes = self.data.nodes.filter(node => inRange({x: event.x, y: event.y}, node)).filter(node => self.linkNotExist(event.subject.index, node.index))
           self.mouseLink = self.mouseLink
               .attr("stroke", "#44cef6")
               .attr("stroke-width", 3)
@@ -457,24 +466,25 @@ export default {
         return distance <= radius * 4 && distance > radius;
       }
 
-      function linkNotExist(source, target){
-        // console.log(source, target);
-        let notExist = true;
-        for(let i = 0, len=self.data.links.length; i < len; i++) {
-          if(self.data.links[i].source.index === source && self.data.links[i].target.index === target){
-            notExist = false;
-          }
-        }
-        return notExist;
-      }
-
       return d3.drag()
           .on("start", dragStarted)
           .on("drag", dragged)
           .on("end", dragEnded);
     },
 
-    //编辑视图相关
+    linkNotExist(source, target){
+    // console.log(source, target);
+    let notExist = true;
+    for(let i = 0, len=this.data.links.length; i < len; i++) {
+      if(this.data.links[i].source.index === source && this.data.links[i].target.index === target){
+        notExist = false;
+      }
+    }
+    return notExist;
+    },
+
+
+//编辑视图相关
     zoomed({transform}) {
       d3.selectAll("g").attr("transform", transform);
      },
