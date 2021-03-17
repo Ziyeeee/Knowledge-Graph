@@ -122,18 +122,18 @@ export default {
                 .force("y", d3.forceY())
                 .on("tick", this.ticked);
 
-            this.mouseLink = this.svg.append("g")
-                .selectAll("line");
             this.cursor = this.svg.append('g')
                 .append("circle")
                 .attr("display","none")
                 .attr("fill", "none")
                 .attr("stroke-width", 2)
                 .attr("r", radius);
-            this.node = this.svg.append("g")
-                .selectAll("circle");
             this.link = this.svg.append("g")
                 .selectAll("line");
+            this.mouseLink = this.svg.append("g")
+                .selectAll("line");
+            this.node = this.svg.append("g")
+                .selectAll("circle");
             this.nodeText = this.svg.append("g")
                 .selectAll("text");
             this.arrowMarker = this.svg.append("defs").append("marker")
@@ -226,6 +226,7 @@ export default {
         this.selectedEdge = this.data.links[d3.select(d.target).attr("index")];
         d3.select(d.target).transition()
             .attr("stroke-width", 8);
+        console.log(d.target, d3.select(d.target))
       }
 
     },
@@ -326,17 +327,20 @@ export default {
     // 边绘制相关
     addLink(source, targets) {
       for (const target of targets) {
-        this.data.links.push({source, target});
+        this.data.links.push({index: this.data.links.length, source, target});
       }
       this.drawLinks();
 
       this.simulation.force("link").links(this.data.links);
       this.simulation.alpha(1).restart();
+      console.log(this.data.links);
     },
     deleteLink(){
       if(this.mouseIsSelect) {
         this.data.links.splice(this.selectedEdge.index, 1);
-        this.updateGraph();
+        this.drawLinks();
+        this.simulation.force("link").links(this.data.links);
+        this.simulation.alpha(1).restart();
       }
     },
     drawLinks() {
