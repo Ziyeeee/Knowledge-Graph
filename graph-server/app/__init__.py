@@ -1,6 +1,9 @@
 from flask import Flask
 from config import Config
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
+from model import connectNeo4j
+
+graph = connectNeo4j()
 
 
 def create_app(config_class=Config):
