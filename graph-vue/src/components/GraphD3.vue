@@ -14,7 +14,7 @@
       <el-button v-if="!isFullScreen" @click="showFullScreen"><i class="el-icon-full-screen"></i> 全屏</el-button>
       <el-button v-else @click="exitFullScreen" @keyup.space="exitFullScreen"><i class="el-icon-full-screen"></i> 退出全屏</el-button>
     </div>
-    <EditNodeBox id="EditNodeBox" :dialogVisible="this.isVisible" msg="This is a Box" :nodeText="this.selectedNode.label" @EditNodeInfo="EditNode"></EditNodeBox>
+    <EditNodeBox id="EditNodeBox" :nodeText="this.selectedNode.label" :dialogVisible="this.isVisible" msg="This is a Box"  @EditNodeInfo="EditNode"></EditNodeBox>
 
   </div>
 </template>
@@ -111,8 +111,7 @@ export default {
                 .attr("viewBox", [-this.width / 2, -this.height / 2, this.width, this.height])
                 .on("mouseleave", this.mouseLeft)
                 .on("mousemove", this.mouseMoved)
-                .on("click", this.clicked)
-                .on("dbcklick", this.addInfo);
+                .on("click", this.clicked);
 
             this.simulation = d3.forceSimulation(this.data.nodes)
                 .force("charge", d3.forceManyBody().strength(-1000))
@@ -182,32 +181,37 @@ export default {
       // this.simulation.alpha(0.3).restart();
     },
     mouseEnterNode(d) {
-      this.mouseIsSelect = true;
-      this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
-      this.cursorNode = this.selectedNode;
-      if (this.$store.state.clickPath && this.$store.state.clickPath[0] === "1"){
-        this.cursorNode = this.selectedNode;
-        this.cursor.attr("display", null)
-            .attr("fill", colorList[this.selectedNode.groupId])
-            .attr("fill-opacity", 0.2)
-            .attr("stroke", colorList[this.selectedNode.groupId])
-            .attr("stroke-opacity", 0.4)
-            .attr("cx", this.selectedNode.x)
-            .attr("cy", this.selectedNode.y)
-            .transition()
-            .attr("r", radius * 3);
-      }
-      if (this.$store.state.clickPath && this.$store.state.clickPath[0] === "2"){
-        this.cursorNode = this.selectedNode;
-        this.cursor.attr("display", null)
-            .attr("fill", "#696969")
-            .attr("fill-opacity", 0.2)
-            .attr("stroke", "#696969")
-            .attr("stroke-opacity", 0.4)
-            .attr("cx", this.selectedNode.x)
-            .attr("cy", this.selectedNode.y)
-            .transition()
-            .attr("r", radius * 1.5);
+      if (this.$store.state.clickPath){
+        if(this.$store.state.clickPath[0] === "1"){
+          this.mouseIsSelect = true;
+          this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
+          this.cursorNode = this.selectedNode;
+          this.cursorNode = this.selectedNode;
+          this.cursor.attr("display", null)
+              .attr("fill", colorList[this.selectedNode.groupId])
+              .attr("fill-opacity", 0.2)
+              .attr("stroke", colorList[this.selectedNode.groupId])
+              .attr("stroke-opacity", 0.4)
+              .attr("cx", this.selectedNode.x)
+              .attr("cy", this.selectedNode.y)
+              .transition()
+              .attr("r", radius * 3);
+        }
+        else if(this.$store.state.clickPath[0] === "2"){
+          this.mouseIsSelect = true;
+          this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
+          this.cursorNode = this.selectedNode;
+          this.cursorNode = this.selectedNode;
+          this.cursor.attr("display", null)
+              .attr("fill", "#696969")
+              .attr("fill-opacity", 0.2)
+              .attr("stroke", "#696969")
+              .attr("stroke-opacity", 0.4)
+              .attr("cx", this.selectedNode.x)
+              .attr("cy", this.selectedNode.y)
+              .transition()
+              .attr("r", radius * 1.5);
+        }
       }
     },
     mouseLeaveNode(d) {
@@ -218,8 +222,9 @@ export default {
             .transition()
             .attr("display", "none")
             .on('end', function (){this.cursorNode = {}})
+        // this.selectedNode = {};
       }
-      this.selectedNode = {};
+
     },
     mouseEnterEdge(d){
       if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "3"){
