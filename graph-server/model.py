@@ -62,7 +62,7 @@ def adjSubgraph(data, baseNodeIndex, numLayer):
     adjMatrix = {}
     subAdjMatrix = {}
     bfsQueue = Queue()
-    subGraphData = {'nodes':[], 'links':[]}
+    subGraphData = {'nodes': [], 'links': []}
 
     for node in data['nodes']:
         downNodesFlag[node['index']] = 0
@@ -133,9 +133,9 @@ def refreshIndex(data):
 
 # graph = connectNeo4j()
 # data = loadDataFromNeo4j(graph)
-with open('./templates/data.json', 'r') as f:
-    data = json.load(f)
-data = adjSubgraph(data, 3, 2)
-print(data)
-data = refreshIndex(data)
-print(data)
+# with open('./templates/data.json', 'r') as f:
+#     data = json.load(f)
+# data = adjSubgraph(data, 3, 2)
+# print(data)
+# data = refreshIndex(data)
+# print(data)

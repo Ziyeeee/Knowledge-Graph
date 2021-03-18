@@ -96,7 +96,6 @@ export default {
     };
 
     this.initialGraph();
-    this.getSubGraph();
   },
   methods:{
     // 初始化图
@@ -213,11 +212,27 @@ export default {
               .transition()
               .attr("r", radius * 1.5);
         }
+        else if(this.$store.state.clickPath[0] === "4"){
+          this.mouseIsSelect = true;
+          this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
+          this.cursorNode = this.selectedNode;
+          this.cursorNode = this.selectedNode;
+          this.cursor.attr("display", null)
+              .attr("fill", "#F385A8")
+              .attr("fill-opacity", 0.2)
+              .attr("stroke", "#F385A8")
+              .attr("stroke-opacity", 0.4)
+              .attr("cx", this.selectedNode.x)
+              .attr("cy", this.selectedNode.y)
+              .transition()
+              .attr("r", radius * 1.5);
+        }
       }
     },
+    // eslint-disable-next-line no-unused-vars
     mouseLeaveNode(d) {
       this.mouseIsSelect = false;
-      if (this.$store.state.clickPath && (this.$store.state.clickPath[0] === "1" || this.$store.state.clickPath[0] === "2")){
+      if (this.$store.state.clickPath && (this.$store.state.clickPath[0] === "1" || this.$store.state.clickPath[0] === "2" ||this.$store.state.clickPath[0] === "4")){
         this.cursor.transition()
             .attr("r", radius)
             .transition()
@@ -254,13 +269,29 @@ export default {
       if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "3"){
         this.deleteLink();
       }
+      if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "4"){
+        this.getSubGraph();
+      }
+    },
+
+    //保存
+    saveGraph(){
+      const url = "http://127.0.0.1:5000/api/post_data";
+      const data = {nodes: this.data.nodes, links: this.data.links}
+      console.log(data)
+      this.axios.post(url, data)
+          .then((res) => console.log(res.data))
+          .catch((error) => console.log(error))
     },
 
     getSubGraph(){
       const url = "http://127.0.0.1:5000/api/get_subGraphData";
-      this.axios.get(url, {params: {baseNodeIndex: 0, numLayer: 2}})
+      this.axios.get(url, {params: {baseNodeIndex: this.selectedNode.index, numLayer: 2}})
           .then((res) => {
-            console.log(res)
+            console.log(res.data);
+            this.data = res.data;
+            this.updateGraph();
+
           })
           .catch((error) =>{
             console.log(error)
@@ -279,14 +310,7 @@ export default {
       this.isVisible = false;
     },
 
-    saveGraph(){
-      const url = "http://127.0.0.1:5000/api/post_data";
-      const data = {nodes: this.data.nodes, links: this.data.links}
-      console.log(data)
-      this.axios.post(url, data)
-          .then((res) => console.log(res.data))
-          .catch((error) => console.log(error))
-    },
+
 
     // 节点绘制相关
     addNode(source) {
@@ -383,6 +407,7 @@ export default {
       this.drawLinks();
 
       this.drawNodes();
+
 
       this.simulation.nodes(this.data.nodes);
       this.simulation.force("link").links(this.data.links);

@@ -40,8 +40,12 @@
         <span slot="title">删除节点</span>
       </el-menu-item>
       <el-menu-item class="el-submenu" index="3">
-        <i class="el-icon-delete"></i>
+        <i class="el-icon-delete-solid"></i>
         <span slot="title">删除边</span>
+      </el-menu-item>
+      <el-menu-item class="el-submenu" index="4">
+        <i class="el-icon-more-outline"></i>
+        <span slot="title">局部展示</span>
       </el-menu-item>
     </el-menu>
   </el-aside>
