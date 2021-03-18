@@ -49,4 +49,5 @@ def post_data():
 @bp.route('/get_subGraphData', methods=['GET'])
 def get_subGraphData():
     subGraphData = adjSubgraph(data, int(request.args['baseNodeIndex']), int(request.args['numLayer']))
+    subGraphData = refreshIndex(subGraphData)
     return jsonify(subGraphData)
