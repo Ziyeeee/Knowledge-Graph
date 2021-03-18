@@ -1,5 +1,6 @@
 from py2neo import Graph, Node, Relationship, Subgraph
 from py2neo.matching import NodeMatcher, RelationshipMatcher
+from queue import Queue
 import json
 
 
@@ -23,7 +24,8 @@ def json2neo(data, graph):
     nodes = []
     for node_json in data["nodes"]:
         try:
-            node = Node(nodeLabel[node_json['groupId']], index=node_json['index'], label=node_json['label'], groupId=node_json['groupId'])
+            node = Node(nodeLabel[node_json['groupId']], index=node_json['index'], label=node_json['label'],
+                        groupId=node_json['groupId'])
         except KeyError:
             node = Node(nodeLabel[node_json['groupId']], index=node_json['index'], groupId=node_json['groupId'])
         nodes.append(node)
@@ -51,3 +53,74 @@ def loadDataFromNeo4j(graph):
         links_list.append({'source': link.start_node['index'], 'target': link.end_node['index']})
     return {'nodes': nodes_list, 'links': links_list}
 
+
+def adjSubgraph(data, baseNodeIndex, numLayer):
+    # initial
+    downNodesFlag = {}
+    upNodesFlag = {}
+    nodesDict = {}
+    adjMatrix = {}
+    subAdjMatrix = {}
+    bfsQueue = Queue()
+    subGraphData = {'nodes':[], 'links':[]}
+
+    for node in data['nodes']:
+        downNodesFlag[node['index']] = 0
+        upNodesFlag[node['index']] = 0
+        nodesDict[node['index']] = node
+    for node in data['nodes']:
+        adjMatrix[node['index']] = downNodesFlag.copy()
+        subAdjMatrix[node['index']] = downNodesFlag.copy()
+    for link in data['links']:
+        adjMatrix[link['source']][link['target']] = 1
+
+    # down
+    bfsQueue.put(baseNodeIndex)
+    for i in range(0, numLayer):
+        len = bfsQueue.qsize()
+        for j in range(0, len):
+            nodeIndex = bfsQueue.get()
+            if downNodesFlag[nodeIndex] == 0:
+                downNodesFlag[nodeIndex] = 1
+                for (targetIndex, flag) in adjMatrix[nodeIndex].items():
+                    if flag:
+                        bfsQueue.put(targetIndex)
+                        subAdjMatrix[nodeIndex][targetIndex] = flag
+    while not bfsQueue.empty():
+        nodeIndex = bfsQueue.get()
+        if downNodesFlag[nodeIndex] == 0:
+            downNodesFlag[nodeIndex] = 1
+
+    # up
+    bfsQueue.put(baseNodeIndex)
+    for i in range(0, numLayer):
+        len = bfsQueue.qsize()
+        for j in range(0, len):
+            nodeIndex = bfsQueue.get()
+            if upNodesFlag[nodeIndex] == 0:
+                upNodesFlag[nodeIndex] = 1
+                for key in adjMatrix.keys():
+                    flag = adjMatrix[key][nodeIndex]
+                    if flag:
+                        bfsQueue.put(targetIndex)
+                        subAdjMatrix[key][nodeIndex] = flag
+    while not bfsQueue.empty():
+        nodeIndex = bfsQueue.get()
+        if upNodesFlag[nodeIndex] == 0:
+            upNodesFlag[nodeIndex] = 1
+
+    nodesFlag = {}
+    for upNode, downNode in zip(upNodesFlag.items(), downNodesFlag.items()):
+        if upNode[1] or downNode[1]:
+            subGraphData['nodes'].append(nodesDict[upNode[0]])
+    for sourceIndex in subAdjMatrix.keys():
+        for (targetIndex, flag) in subAdjMatrix[sourceIndex].items():
+            if flag:
+                subGraphData['links'].append({'source': sourceIndex, 'target': targetIndex})
+    return subGraphData
+
+# graph = connectNeo4j()
+# data = loadDataFromNeo4j(graph)
+with open('./templates/data.json', 'r') as f:
+    data = json.load(f)
+adjSubgraph(data, 0, 2)

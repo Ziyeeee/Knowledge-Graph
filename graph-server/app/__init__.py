@@ -5,7 +5,8 @@ from model import connectNeo4j
 
 
 databaseMode = True
-graph = connectNeo4j()
+if databaseMode:
+    graph = connectNeo4j()
 
 
 def create_app(config_class=Config):
