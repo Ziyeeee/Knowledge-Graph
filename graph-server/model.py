@@ -54,7 +54,7 @@ def loadDataFromNeo4j(graph):
     return {'nodes': nodes_list, 'links': links_list}
 
 
-def adjSubgraph(data, baseNodeIndex, numLayer):
+def adjSubgraph(mainGraphData, baseNodeIndex, numLayer):
     # initial
     downNodesFlag = {}
     upNodesFlag = {}
@@ -64,14 +64,14 @@ def adjSubgraph(data, baseNodeIndex, numLayer):
     bfsQueue = Queue()
     subGraphData = {'nodes': [], 'links': []}
 
-    for node in data['nodes']:
+    for node in mainGraphData['nodes']:
         downNodesFlag[node['index']] = 0
         upNodesFlag[node['index']] = 0
         nodesDict[node['index']] = node
-    for node in data['nodes']:
+    for node in mainGraphData['nodes']:
         adjMatrix[node['index']] = downNodesFlag.copy()
         subAdjMatrix[node['index']] = downNodesFlag.copy()
-    for link in data['links']:
+    for link in mainGraphData['links']:
         adjMatrix[link['source']][link['target']] = 1
 
     # down
@@ -120,16 +120,20 @@ def adjSubgraph(data, baseNodeIndex, numLayer):
                 subGraphData['links'].append({'source': sourceIndex, 'target': targetIndex})
     return subGraphData
 
+
 def refreshIndex(data):
     nodes = data['nodes']
-    nodeIndexDict = {}
+    indexOld2New = {}
+    indexNew2Old = {}
     for node, index in zip(nodes, range(0, len(nodes))):
-        nodeIndexDict[node['index']] = index
+        indexOld2New[node['index']] = index
         node['index'] = index
     for link in data['links']:
-        link['source'] = nodeIndexDict[link['source']]
-        link['target'] = nodeIndexDict[link['target']]
-    return data
+        link['source'] = indexOld2New[link['source']]
+        link['target'] = indexOld2New[link['target']]
+    for (key, value) in indexOld2New.items():
+        indexNew2Old[value] = key
+    return data, indexNew2Old
 
 # graph = connectNeo4j()
 # data = loadDataFromNeo4j(graph)

@@ -1,6 +1,6 @@
 from app.api import bp
 from flask import request, jsonify, url_for
-import json
+import json, copy
 from app import databaseMode
 from model import *
 
@@ -8,6 +8,7 @@ if databaseMode:
     from app import graph
 
 data = {}
+
 
 @bp.route('/get_data', methods=['GET'])
 def get_data():
@@ -23,6 +24,7 @@ def get_data():
 
 @bp.route('/post_data', methods=['POST', 'OPTIONS'])
 def post_data():
+    global data
     if request.method == 'POST':
         data = request.json
 
@@ -46,9 +48,20 @@ def post_data():
     return 'success'
 
 
+indexNew2Old = {}
 @bp.route('/get_subGraphData', methods=['GET'])
 def get_subGraphData():
-    print(data)
-    subGraphData = adjSubgraph(data, int(request.args['baseNodeIndex']), int(request.args['numLayer']))
-    subGraphData = refreshIndex(subGraphData)
+    global indexNew2Old
+    # print(indexNew2Old)
+    # print(request.args['baseNodeIndex'])
+    # try:
+    #     print(indexNew2Old[int(request.args['baseNodeIndex'])])
+    # except:
+    #     pass
+    mainGraphData = copy.deepcopy(data)
+    try:
+        subGraphData = adjSubgraph(mainGraphData, indexNew2Old[int(request.args['baseNodeIndex'])], int(request.args['numLayer']))
+    except KeyError:
+        subGraphData = adjSubgraph(mainGraphData, int(request.args['baseNodeIndex']), int(request.args['numLayer']))
+    subGraphData, indexNew2Old = refreshIndex(subGraphData)
     return jsonify(subGraphData)
