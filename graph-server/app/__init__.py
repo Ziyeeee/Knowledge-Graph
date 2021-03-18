@@ -4,7 +4,7 @@ from flask_cors import CORS
 from model import connectNeo4j
 
 
-databaseMode = True
+databaseMode = False
 if databaseMode:
     graph = connectNeo4j()
 
