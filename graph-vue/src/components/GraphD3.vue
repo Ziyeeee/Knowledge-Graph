@@ -96,6 +96,7 @@ export default {
     };
 
     this.initialGraph();
+    this.getSubGraph();
   },
   methods:{
     // 初始化图
@@ -253,6 +254,17 @@ export default {
       if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "3"){
         this.deleteLink();
       }
+    },
+
+    getSubGraph(){
+      const url = "http://127.0.0.1:5000/api/get_subGraphData";
+      this.axios.get(url, {params: {baseNodeIndex: 0, numLayer: 2}})
+          .then((res) => {
+            console.log(res)
+          })
+          .catch((error) =>{
+            console.log(error)
+          })
     },
 
     // 编辑节点信息

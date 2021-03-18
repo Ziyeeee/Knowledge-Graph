@@ -1,21 +1,23 @@
 from app.api import bp
-from flask import request, jsonify
+from flask import request, jsonify, url_for
 import json
 from app import databaseMode
 from model import *
+
 if databaseMode:
     from app import graph
 
+data = {}
 
 @bp.route('/get_data', methods=['GET'])
 def get_data():
+    global data
     if databaseMode:
         data = loadDataFromNeo4j(graph)
     else:
         # print(request.json)
         with open('./templates/data.json', 'r') as f:
             data = json.load(f)
-
     return jsonify(data)
 
 
@@ -42,3 +44,9 @@ def post_data():
                 json.dump({'nodes': nodes, 'links': links}, f)
 
     return 'success'
+
+
+@bp.route('/get_subGraphData', methods=['GET'])
+def get_subGraphData():
+    subGraphData = adjSubgraph(data, int(request.args['baseNodeIndex']), int(request.args['numLayer']))
+    return jsonify(subGraphData)
