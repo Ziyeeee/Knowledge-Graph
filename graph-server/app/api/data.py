@@ -1,8 +1,10 @@
 from app.api import bp
 from flask import request, jsonify
 import json
-from app import graph, databaseMode
+from app import databaseMode
 from model import *
+if databaseMode:
+    from app import graph
 
 
 @bp.route('/get_data', methods=['GET'])
