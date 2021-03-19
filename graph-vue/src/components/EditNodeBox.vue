@@ -27,6 +27,7 @@ export default {
   methods:{
     getInfo(){
       const label = !this.label ? this.nodeText :this.label;
+      this.label = '';
       this.$emit("EditNodeInfo",label);
     }
   }

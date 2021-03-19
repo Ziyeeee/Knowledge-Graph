@@ -47,6 +47,10 @@
         <i class="el-icon-more-outline"></i>
         <span slot="title">局部展示</span>
       </el-menu-item>
+      <el-menu-item class="el-submenu" index="5">
+        <i class="el-icon-more"></i>
+        <span slot="title">全部展示</span>
+      </el-menu-item>
     </el-menu>
   </el-aside>
 </template>

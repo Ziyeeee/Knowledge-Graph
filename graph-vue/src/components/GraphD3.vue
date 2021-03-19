@@ -182,8 +182,8 @@ export default {
     },
     mouseEnterNode(d) {
       if (this.$store.state.clickPath){
+        if(this.$store.state.clickPath[0] !== "3") this.mouseIsSelect = true;
         if(this.$store.state.clickPath[0] === "1"){
-          this.mouseIsSelect = true;
           this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
           this.cursorNode = this.selectedNode;
           this.cursorNode = this.selectedNode;
@@ -198,7 +198,6 @@ export default {
               .attr("r", radius * 3);
         }
         else if(this.$store.state.clickPath[0] === "2"){
-          this.mouseIsSelect = true;
           this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
           this.cursorNode = this.selectedNode;
           this.cursorNode = this.selectedNode;
@@ -213,7 +212,6 @@ export default {
               .attr("r", radius * 1.5);
         }
         else if(this.$store.state.clickPath[0] === "4"){
-          this.mouseIsSelect = true;
           this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
           this.cursorNode = this.selectedNode;
           this.cursorNode = this.selectedNode;
