@@ -49,19 +49,35 @@ def post_data():
 
 
 indexNew2Old = {}
+mainGraphData = {}
+
+
 @bp.route('/get_subGraphData', methods=['GET'])
 def get_subGraphData():
     global indexNew2Old
+    global mainGraphData
     # print(indexNew2Old)
     # print(request.args['baseNodeIndex'])
     # try:
     #     print(indexNew2Old[int(request.args['baseNodeIndex'])])
     # except:
     #     pass
-    mainGraphData = copy.deepcopy(data)
+
+    if mainGraphData != data:
+        mainGraphData = copy.deepcopy(data)
+        updateAdjMatrix = False
+    else:
+        updateAdjMatrix = True
     try:
-        subGraphData = adjSubgraph(mainGraphData, indexNew2Old[int(request.args['baseNodeIndex'])], int(request.args['numLayer']))
+        subGraphData = adjSubgraph(mainGraphData, indexNew2Old[int(request.args['baseNodeIndex'])],
+                                   int(request.args['numLayer']), updateAdjMatrix=updateAdjMatrix)
     except KeyError:
-        subGraphData = adjSubgraph(mainGraphData, int(request.args['baseNodeIndex']), int(request.args['numLayer']))
+        subGraphData = adjSubgraph(mainGraphData, int(request.args['baseNodeIndex']), int(request.args['numLayer']),
+                                   updateAdjMatrix=updateAdjMatrix)
     subGraphData, indexNew2Old = refreshIndex(subGraphData)
     return jsonify(subGraphData)
+
+
+@bp.route('/get_mainGraphData', methods=['GET'])
+def get_mainGraphData():
+    return jsonify(data)
