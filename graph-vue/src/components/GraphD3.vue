@@ -104,7 +104,7 @@ export default {
       this.axios.get(url)
           .then((res) => {
             this.data = res.data;
-            // console.log(res.data);
+            console.log(res.data);
             this.svg = d3.select("#GraphD3")
                 .attr("height", this.height)
                 .attr("width", this.width)
@@ -114,7 +114,7 @@ export default {
                 .on("click", this.clicked);
 
             this.simulation = d3.forceSimulation(this.data.nodes)
-                .force("charge", d3.forceManyBody().strength(-1000))
+                .force("charge", d3.forceManyBody().strength(-2000))
                 .force("link", d3.forceLink(this.data.links).distance(radius * 5))
                 .force('collide', d3.forceCollide().radius(radius))
                 .force("x", d3.forceX())
@@ -286,7 +286,7 @@ export default {
 
     getSubGraph(){
       const url = "http://127.0.0.1:5000/api/get_subGraphData";
-      this.axios.get(url, {params: {baseNodeIndex: this.selectedNode.index, numLayer: 2}})
+      this.axios.get(url, {params: {baseNodeIndex: this.selectedNode.index, numLayer: 5}})
           .then((res) => {
             console.log(res.data);
             this.data = res.data;
@@ -491,7 +491,7 @@ export default {
         event.subject.fy = null;
 
         if (self.$store.state.clickPath && self.$store.state.clickPath[0] === "1"){
-          self.simulation.force("charge", d3.forceManyBody().strength(-1000))
+          self.simulation.force("charge", d3.forceManyBody().strength(-2000))
               .force("link", d3.forceLink(self.data.links).distance(radius * 5))
               .force("x", d3.forceX())
               .force("y", d3.forceY());
