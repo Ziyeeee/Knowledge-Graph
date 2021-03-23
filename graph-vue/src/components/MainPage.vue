@@ -1,6 +1,6 @@
 <template>
   <div>
-    <GraphD3></GraphD3>
+    <GraphD3 :isShowMainGraph="this.$store.state.showMainGraph"></GraphD3>
   </div>
 </template>
 

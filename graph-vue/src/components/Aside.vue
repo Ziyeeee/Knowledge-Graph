@@ -70,6 +70,13 @@ export default {
   methods: {
     handleSelect(key, keyPath) {
       this.$store.commit('updateClickType', keyPath);
+      // console.log(key, keyPath)
+      if(keyPath[0] === "5") {
+        this.$store.commit('showMainGraph', true);
+      }
+      else {
+        this.$store.commit('showMainGraph', false);
+      }
     },
     // handleOpen(key, keyPath) {
     //
@@ -83,18 +90,18 @@ export default {
 
 <style>
   .el-aside {
-    background-color: #E1B2B1;
-    color: #824D56;
+    background-color: #99BCD6;
+    color: #032946;
     text-align: left;
     width: 20px;
   }
   .el-menu-item-group{
-    background-color: #eeeeee;
-    color: #824D56;
+    background-color: #EEF6FB;
+    color: #032946;
   }
   .el-submenu{
-    background-color: #dddddd;
-    color: #824D56;
+    background-color: #D0E9FB;
+    color: #032946;
   }
 
 </style>

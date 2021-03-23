@@ -48,6 +48,9 @@ const radius = 30;
 export default {
   name: "GraphD3",
   components: {EditNodeBox},
+  props:{
+    isShowMainGraph: Boolean
+  },
   data() {
     return {
       width: 800,
@@ -96,6 +99,13 @@ export default {
     };
 
     this.initialGraph();
+  },
+  watch:{
+    isShowMainGraph: function (newFlag, oldFlag){
+      if(newFlag) {
+        this.showMainGraph()
+      }
+    }
   },
   methods:{
     // 初始化图
@@ -287,6 +297,21 @@ export default {
       this.axios.get(url, {params: {baseNodeIndex: this.selectedNode.index, numLayer: 5}})
           .then((res) => {
             console.log(res.data);
+            this.data = res.data;
+            this.updateGraph();
+
+          })
+          .catch((error) =>{
+            console.log(error)
+          })
+    },
+
+    showMainGraph(){
+      // console.log(this.isShowMainGraph, this.$store.state.showMainGraph)
+      const url = "http://127.0.0.1:5000/api/get_mainGraphData";
+      this.axios.get(url)
+          .then((res) => {
+            // console.log(res.data);
             this.data = res.data;
             this.updateGraph();
 

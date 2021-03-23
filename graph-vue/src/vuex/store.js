@@ -5,15 +5,16 @@ Vue.use(Vuex)
 
 const state = {
     clickPath: undefined,
-    graphNetwork: undefined,
+    showMainGraph: false,
 }
 const mutations = {
     updateClickType(state, clickPath) {
         state.clickPath = clickPath
     },
-    updateGraphNetwork(state, Network) {
-        state.graphNetwork = Network
+    showMainGraph(state, isShowMainGraph) {
+        state.showMainGraph = isShowMainGraph
     }
+
 }
 
 export default new Vuex.Store({

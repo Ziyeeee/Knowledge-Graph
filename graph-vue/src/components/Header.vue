@@ -13,8 +13,8 @@ export default {
 
 <style scoped>
 .el-header{
-  background-color: #E1B2B1;
-  color: #824D56;
+  background-color: #99BCD6;
+  color: #032946;
   text-align: center;
   line-height: 80px;
   font-size: 38px;
