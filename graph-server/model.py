@@ -166,10 +166,13 @@ def md2json(mdName, jsonName):
     index = 0
     for line in lines:
         if len(line) > 2:
+            # print('------------------------------------------------------------------------')
+            # print(line)
             line = line.replace('\n', '')
             line = re.split('[ ：\n]', line)
             line[0] = text2deep[line[0]]
             line.append(index)
+            # print(line)
             if len(line) != 4:
                 print(line)
             graphData.append(line)
