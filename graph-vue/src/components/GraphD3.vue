@@ -5,14 +5,21 @@
     </div>
 
     <div id="SetBar">
-      <el-button><i class="el-icon-refresh-left"> 撤销</i></el-button>
-      <el-button><i class="el-icon-refresh-right"> 恢复</i></el-button>
-      <el-button><i class="el-icon-folder" @click="this.saveGraph"> 保存</i></el-button>
-      <el-button @click="zoomIn"><i class="el-icon-zoom-in"></i> 放大</el-button>
-      <el-button @click="zoomOut"><i class="el-icon-zoom-out"></i> 缩小</el-button>
-      <el-button @click="refresh"><i class="el-icon-refresh-right"></i> 还原</el-button>
-      <el-button v-if="!isFullScreen" @click="showFullScreen"><i class="el-icon-full-screen"></i> 全屏</el-button>
-      <el-button v-else @click="exitFullScreen" @keyup.space="exitFullScreen"><i class="el-icon-full-screen"></i> 退出全屏</el-button>
+      <el-row>
+        <el-col :span="12">
+          <el-button><i class="el-icon-folder" @click="this.saveGraph"> 保存</i></el-button>
+          <el-button @click="zoomIn"><i class="el-icon-zoom-in"></i> 放大</el-button>
+          <el-button @click="zoomOut"><i class="el-icon-zoom-out"></i> 缩小</el-button>
+          <el-button @click="refresh"><i class="el-icon-refresh-right"></i> 还原</el-button>
+          <el-button v-if="!isFullScreen" @click="showFullScreen"><i class="el-icon-full-screen"></i> 全屏</el-button>
+          <el-button v-else @click="exitFullScreen" @keyup.space="exitFullScreen"><i class="el-icon-full-screen"></i> 退出全屏</el-button>
+        </el-col>
+        <el-col :span="12">
+          <el-input v-model="searchInput" clearable placeholder="搜索">
+            <el-button slot="append" icon="el-icon-search" @click="findSubGraph"></el-button>
+          </el-input>
+        </el-col>
+      </el-row>
     </div>
     <EditNodeBox id="EditNodeBox" :nodeText="this.selectedNode.label" :dialogVisible="this.isVisible" msg="This is a Box"  @EditNodeInfo="EditNode"></EditNodeBox>
 
@@ -59,6 +66,7 @@ export default {
       isFullScreen: false,
       isVisible: false,
       timer: false,
+      searchInput: '',
 
       data: {},
       // data: {nodes: nodes, links: edges},
@@ -288,18 +296,46 @@ export default {
       const data = {nodes: this.data.nodes, links: this.data.links}
       console.log(data)
       this.axios.post(url, data)
-          .then((res) => console.log(res.data))
+          .then((res) => {
+            if(res.data) {
+              this.$message({
+                message: '保存成功',
+                type: 'success'
+              });
+            }
+          })
           .catch((error) => console.log(error))
     },
 
     getSubGraph(){
       const url = "http://127.0.0.1:5000/api/get_subGraphData";
-      this.axios.get(url, {params: {baseNodeIndex: this.selectedNode.index, numLayer: 5}})
+      this.axios.get(url, {params: {baseNodeIndex: this.selectedNode.index, numLayer: 3}})
           .then((res) => {
             console.log(res.data);
             this.data = res.data;
             this.updateGraph();
 
+          })
+          .catch((error) =>{
+            console.log(error)
+          })
+    },
+
+    findSubGraph(){
+      const url = "http://127.0.0.1:5000/api/get_search";
+      this.axios.get(url, {params: {search: this.searchInput, numLayer: 3}})
+          .then((res) => {
+            console.log(res.data);
+            if(res.data == false) {
+              this.$message({
+                message: '未找到相关信息',
+                type: 'warning'
+              });
+            }
+            else {
+              this.data = res.data;
+              this.updateGraph();
+            }
           })
           .catch((error) =>{
             console.log(error)
@@ -626,5 +662,6 @@ export default {
     top: 80px;
     left: 200px;
     margin: 10px;
+    width: 75%;
   }
 </style>

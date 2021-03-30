@@ -1,6 +1,7 @@
 from py2neo import Graph, Node, Relationship, Subgraph
 from py2neo.matching import NodeMatcher, RelationshipMatcher
 from queue import Queue
+from jieba import cut_for_search
 import json, re
 
 
@@ -193,6 +194,63 @@ def md2json(mdName, jsonName):
 
     with open('./templates/' + jsonName, 'w') as f:
         json.dump({'nodes': nodes, 'links': links}, f)
+
+
+def searchSubGraph(graph, mainGraphData, search, numLayer, updateAdjMatrix=True):
+    # search = '关联规则挖掘'
+    subGraphData = False
+    nodeMatcher = NodeMatcher(graph)
+    search_list = cut_for_search(search)
+
+    print(search)
+    nodes = nodeMatcher.match(label=search).order_by('_.index')
+    for node in nodes:
+        # print(node)
+        tempSubGraphData = adjSubgraph(mainGraphData, node['index'], numLayer, updateAdjMatrix=updateAdjMatrix)
+        if subGraphData:
+            subGraphData = mergeGraph(subGraphData, tempSubGraphData)
+        else:
+            subGraphData = tempSubGraphData
+
+    for key in search_list:
+        print(key)
+        nodes = nodeMatcher.match(label=key).order_by('_.index')
+        for node in nodes:
+            # print(node)
+            tempSubGraphData = adjSubgraph(mainGraphData, node['index'], numLayer, updateAdjMatrix=updateAdjMatrix)
+            if subGraphData:
+                subGraphData = mergeGraph(subGraphData, tempSubGraphData)
+            else:
+                subGraphData = tempSubGraphData
+    return subGraphData
+
+
+def mergeGraph(graph0, graph1):
+    nodes_dict = {}
+
+    for node in graph0['nodes']:
+        nodes_dict[node['index']] = node
+    for node in graph1['nodes']:
+        nodes_dict[node['index']] = node
+    # print(nodes_dict.keys())
+
+    links_set = set()
+    for link in graph0['links']:
+        links_set.add(link.values())
+    for link in graph1['links']:
+        links_set.add(link.values())
+    # print(links_set)
+
+    nodes_list = []
+    links_list = []
+    for node in nodes_dict.values():
+        nodes_list.append(node)
+    for link in links_set:
+        link = list(link)
+        links_list.append({'source': link[0], 'target': link[1]})
+    # print({'nodes': nodes_list, 'links': links_list})
+    return {'nodes': nodes_list, 'links': links_list}
+
 
 
 # graph = connectNeo4j()

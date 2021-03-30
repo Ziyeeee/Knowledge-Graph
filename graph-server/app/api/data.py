@@ -45,7 +45,7 @@ def post_data():
             with open('./templates/data.json', 'w') as f:
                 json.dump({'nodes': nodes, 'links': links}, f)
 
-    return 'success'
+    return jsonify(1)
 
 
 indexNew2Old = {}
@@ -65,9 +65,9 @@ def get_subGraphData():
 
     if mainGraphData != data:
         mainGraphData = copy.deepcopy(data)
-        updateAdjMatrix = False
-    else:
         updateAdjMatrix = True
+    else:
+        updateAdjMatrix = False
     try:
         subGraphData = adjSubgraph(mainGraphData, indexNew2Old[int(request.args['baseNodeIndex'])],
                                    int(request.args['numLayer']), updateAdjMatrix=updateAdjMatrix)
@@ -81,3 +81,22 @@ def get_subGraphData():
 @bp.route('/get_mainGraphData', methods=['GET'])
 def get_mainGraphData():
     return jsonify(data)
+
+
+@bp.route('/get_search', methods=['GET'])
+def get_search():
+    # print(request.args['search'])
+    global indexNew2Old
+    global mainGraphData
+
+    if mainGraphData != data:
+        mainGraphData = copy.deepcopy(data)
+        updateAdjMatrix = True
+    else:
+        updateAdjMatrix = False
+    if databaseMode:
+        subGraphData = searchSubGraph(graph, mainGraphData, request.args['search'], int(request.args['numLayer']), updateAdjMatrix=updateAdjMatrix)
+
+    if subGraphData:
+        subGraphData, indexNew2Old = refreshIndex(subGraphData)
+    return jsonify(subGraphData)
