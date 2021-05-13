@@ -3,7 +3,6 @@
     <div id="GraphLayer" style="">
       <svg id="GraphD3"></svg>
     </div>
-
     <div id="SetBar">
       <el-row>
         <el-col :span="12">
@@ -15,21 +14,37 @@
           <el-button v-else @click="exitFullScreen" @keyup.space="exitFullScreen"><i class="el-icon-full-screen"></i> 退出全屏</el-button>
         </el-col>
         <el-col :span="12">
-          <el-input v-model="searchInput" clearable placeholder="搜索">
+          <el-autocomplete
+              class="inline-input"
+              v-model="searchInput"
+              :fetch-suggestions="searchAutoComplete"
+              placeholder="搜索"
+              @select="handleSelect"
+          >
             <el-button slot="append" icon="el-icon-search" @click="findSubGraph"></el-button>
-          </el-input>
+          </el-autocomplete>
+<!--          <el-input v-model="searchInput" clearable placeholder="搜索" @keydown.enter.native="findSubGraph">-->
+<!--            <el-button slot="append" icon="el-icon-search" @click="findSubGraph"></el-button>-->
+<!--          </el-input>-->
         </el-col>
       </el-row>
     </div>
+    <el-dialog :title="cardTitle" :visible.sync="dialogCardVisible" :append-to-body="true">
+      <el-card class="box-card" shadow="never">
+        <div v-for="item in cardItems" :key="item" class="text item">
+          <el-button type="text" @click="clickCardText(item.label)" >{{item.label}}</el-button>
+        </div>
+      </el-card>
+    </el-dialog>
     <EditNodeBox id="EditNodeBox" :nodeText="this.selectedNode.label" :dialogVisible="this.isVisible" msg="This is a Box"  @EditNodeInfo="EditNode"></EditNodeBox>
-
+    <BookDrawer :drawer="this.isShowDrawer" :selected-node="this.selectedNode" @isClose="closeDrawer"></BookDrawer>
   </div>
 </template>
 
 <script>
 import * as d3 from 'd3';
 import EditNodeBox from "@/components/EditNodeBox";
-
+import BookDrawer from "@/components/BookDrawer";
 
 // var nodes = [{index: 0, label: 'Node 1', groupId: 0},
 //   {index: 1, label: 'Node 2', groupId: 1},
@@ -46,7 +61,7 @@ const colorList = [
   '#FCFE8B',
   '#B9F385',
   '#75D6C9',
-  '#bc7cda',
+  '#BC7CDA',
   '#F385A8',
 ];
 const opacity = 1;
@@ -54,7 +69,7 @@ const radius = 30;
 
 export default {
   name: "GraphD3",
-  components: {EditNodeBox},
+  components: {BookDrawer, EditNodeBox},
   props:{
     isShowMainGraph: Boolean
   },
@@ -67,6 +82,13 @@ export default {
       isVisible: false,
       timer: false,
       searchInput: '',
+      autoCompleteList: [],
+      selectAutoComplete: {},
+      isRecommendQuery: false,
+      dialogCardVisible: false,
+      cardTitle: '',
+      cardItems: [],
+      isShowDrawer: false,
 
       data: {},
       // data: {nodes: nodes, links: edges},
@@ -229,14 +251,14 @@ export default {
               .transition()
               .attr("r", radius * 1.5);
         }
-        else if(this.$store.state.clickPath[0] === "4"){
+        else if(this.$store.state.clickPath[0] === "4" || this.$store.state.clickPath[0] === "6") {
           this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
           this.cursorNode = this.selectedNode;
           this.cursorNode = this.selectedNode;
           this.cursor.attr("display", null)
-              .attr("fill", "#F385A8")
+              .attr("fill", colorList[this.selectedNode.groupId])
               .attr("fill-opacity", 0.2)
-              .attr("stroke", "#F385A8")
+              .attr("stroke", colorList[this.selectedNode.groupId])
               .attr("stroke-opacity", 0.4)
               .attr("cx", this.selectedNode.x)
               .attr("cy", this.selectedNode.y)
@@ -248,7 +270,7 @@ export default {
     // eslint-disable-next-line no-unused-vars
     mouseLeaveNode(d) {
       this.mouseIsSelect = false;
-      if (this.$store.state.clickPath && (this.$store.state.clickPath[0] === "1" || this.$store.state.clickPath[0] === "2" ||this.$store.state.clickPath[0] === "4")){
+      if (this.$store.state.clickPath && (this.$store.state.clickPath[0] === "1" || this.$store.state.clickPath[0] === "2" ||this.$store.state.clickPath[0] === "4"||this.$store.state.clickPath[0] === "6")){
         this.cursor.transition()
             .attr("r", radius)
             .transition()
@@ -288,6 +310,9 @@ export default {
       if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "4"){
         this.getSubGraph();
       }
+      if(this.$store.state.clickPath && this.$store.state.clickPath[0] === "6"){
+        this.openDrawer();
+      }
     },
 
     //保存
@@ -311,10 +336,10 @@ export default {
       const url = "http://127.0.0.1:5000/api/get_subGraphData";
       this.axios.get(url, {params: {baseNodeIndex: this.selectedNode.index, numLayer: 3}})
           .then((res) => {
+            this.mouseLeaveNode();
             console.log(res.data);
             this.data = res.data;
             this.updateGraph();
-
           })
           .catch((error) =>{
             console.log(error)
@@ -323,7 +348,69 @@ export default {
 
     findSubGraph(){
       const url = "http://127.0.0.1:5000/api/get_search";
-      this.axios.get(url, {params: {search: this.searchInput, numLayer: 3}})
+      this.axios.get(url, {params: {search: this.searchInput, numLayer: 3, isRecommend: this.isRecommendQuery}})
+          .then((res) => {
+            console.log(res.data);
+            if(res.data == false) {
+              this.$message({
+                message: '未找到相关信息',
+                type: 'warning'
+              });
+            }
+            else {
+              this.data = res.data;
+              this.updateGraph();
+              if (this.isInList(this.searchInput, this.autoCompleteList)){
+                this.dialogCardVisible = true
+                this.cardTitle = this.searchInput
+                this.cardItems = this.data.nodes.slice(1)
+              }
+            }
+          })
+          .catch((error) =>{
+            console.log(error)
+          })
+    },
+
+    searchAutoComplete(queryString, cb){
+      // console.log(queryString)
+
+      if (!this.isInList(queryString, this.autoCompleteList)){
+        this.isRecommendQuery = false
+        const url = "http://127.0.0.1:5000/api/get_autoComplete";
+        this.axios.get(url, {params: {search: this.searchInput}})
+            .then((res) => {
+              // console.log(res.data);
+              // this.data = res.data;
+              this.autoCompleteList = res.data;
+              cb(res.data);
+            })
+            .catch((error) =>{
+              console.log(error);
+            })
+      }
+      else {
+        cb([]);
+      }
+    },
+
+    handleSelect() {
+      this.isRecommendQuery = true;
+    },
+
+    isInList(value, list){
+      for(let i=0; i < list.length; i++){
+        if(value === list[i]['value']){
+          return true;
+        }
+      }
+      return false;
+    },
+
+    clickCardText(text){
+      this.searchInput = text;
+      const url = "http://127.0.0.1:5000/api/get_search";
+      this.axios.get(url, {params: {search: text, numLayer: 3, isRecommend: false}})
           .then((res) => {
             console.log(res.data);
             if(res.data == false) {
@@ -340,6 +427,7 @@ export default {
           .catch((error) =>{
             console.log(error)
           })
+      this.dialogCardVisible = false;
     },
 
     showMainGraph(){
@@ -369,7 +457,14 @@ export default {
       this.isVisible = false;
     },
 
-
+    openDrawer(){
+      if(this.mouseIsSelect){
+        this.isShowDrawer = true;
+      }
+    },
+    closeDrawer(){
+      this.isShowDrawer = false;
+    },
 
     // 节点绘制相关
     addNode(source) {
@@ -406,7 +501,9 @@ export default {
                   .on("mouseenter", d => this.mouseEnterNode(d))
                   .on("mouseleave", d => this.mouseLeaveNode(d))
                   .on("dblclick", d => this.Openbox(d)),
-              update => update.attr("fill", d => colorList[d.groupId]),
+              update => update
+                  .attr("fill", d => colorList[d.groupId]),
+                  // .attr("r", d => d.radius),
               exit => exit.remove()
           );
       this.drawNodeText();
@@ -418,9 +515,34 @@ export default {
               enter => enter.append("text")
                   .attr("index", d => d.index)
                   .attr("text-anchor","middle")
-                  .text(d => d.label)
+                  .text(d => {
+                    if (d.groupId == 3) {
+                      if (d.label.length >= 4) {
+                        // return d.label
+                        return d.label.substr(0, 4) + '…'
+                      }
+                      else {
+                        return d.label
+                      }
+                    }
+                    else {
+                      return d.label
+                    }
+                  })
                   .call(this.dragger),
-              update => update.text(d => d.label),
+              update => update.text(d => {
+                if (d.groupId == 3) {
+                  if (d.label.length >= 4) {
+                    return d.label.substr(0, 4) + '…'
+                  }
+                  else {
+                    return d.label
+                  }
+                }
+                else {
+                  return d.label
+                }
+              }),
               exit => exit.remove()
           );
     },
@@ -664,4 +786,13 @@ export default {
     margin: 10px;
     width: 75%;
   }
+  .text {
+    font-size: 15px;
+  }
+  .item {
+    padding: 10px 0;
+  }
+  /*.box-card {*/
+  /*  width: 480px;*/
+  /*}*/
 </style>

@@ -51,6 +51,10 @@
         <i class="el-icon-more"></i>
         <span slot="title">全部展示</span>
       </el-menu-item>
+      <el-menu-item class="el-submenu" index="6">
+        <i class="el-icon-document"></i>
+        <span slot="title">参考原文</span>
+      </el-menu-item>
     </el-menu>
   </el-aside>
 </template>

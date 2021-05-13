@@ -4,7 +4,7 @@
     <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
     <!-- <GraphVue></GraphVue>-->
     <el-container direction="vertical">
-      <Header msg="This is a header"></Header>
+      <Header msg="面 向 课 程 的 知 识 图 谱 可 视 化 构 建 系 统"></Header>
       <el-container>
         <Aside msg="This is aside"></Aside>
         <MainPage msg="This is main"></MainPage>

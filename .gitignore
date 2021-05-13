@@ -2,3 +2,6 @@
 __pycache__/
 .env
 
+*.png
+*.jpg
+*.iter5

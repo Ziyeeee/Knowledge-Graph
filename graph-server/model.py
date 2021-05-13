@@ -1,8 +1,19 @@
 from py2neo import Graph, Node, Relationship, Subgraph
 from py2neo.matching import NodeMatcher, RelationshipMatcher
 from queue import Queue
-from jieba import cut_for_search
-import json, re
+from jieba import load_userdict, cut_for_search
+import json
+from gensim.models import KeyedVectors
+
+
+adjMatrix = {}
+nodeLabel = [
+    '任务',
+    '方法',
+    '步骤',
+    '属性',
+    '概念',
+]
 
 
 def connectNeo4j():
@@ -15,13 +26,6 @@ def json2neo(data, graph):
 
     graph.delete_all()
 
-    nodeLabel = [
-        'task',
-        'method',
-        'step',
-        'attribute',
-        'concept',
-    ]
     nodes = []
     for node_json in data["nodes"]:
         try:
@@ -33,7 +37,8 @@ def json2neo(data, graph):
     kg = Subgraph(nodes)
 
     for link_json in data["links"]:
-        link = Relationship(nodes[link_json['source']], 'links', nodes[link_json['target']])
+        linkLabel = str(nodes[link_json['target']].labels)[1:]
+        link = Relationship(nodes[link_json['source']], linkLabel, nodes[link_json['target']])
         kg = kg | link
 
     # graph.create(sg_nodes)
@@ -49,13 +54,44 @@ def loadDataFromNeo4j(graph):
     nodes_list = []
     links_list = []
     for node in list(nodes):
-        nodes_list.append({'index': node['index'], 'label': node['label'], 'groupId': node['groupId']})
+        radius = 30
+        # radius = 30 + calculateOutDegree(node['index']) * 5
+        # if radius > 60:
+        #     radius = 90
+        nodes_list.append(
+            {'index': node['index'], 'label': node['label'], 'groupId': node['groupId'], 'radius': radius})
     for link in list(links):
         links_list.append({'source': link.start_node['index'], 'target': link.end_node['index']})
     return {'nodes': nodes_list, 'links': links_list}
 
 
-adjMatrix = {}
+def loadDataFromJson(fileName):
+    with open(fileName, 'r') as f:
+        return json.load(f)
+
+
+def calculateOutDegree(index, data):
+    global adjMatrix
+    inniAdjMatrix(data)
+    cnt = 0
+    for value in adjMatrix[index].values():
+        if value:
+            cnt += 1
+    return cnt
+
+
+def inniAdjMatrix(data):
+    global adjMatrix
+    node_dict = {}
+    for node in data['nodes']:
+        node_dict[node['index']] = 0
+    for node in data['nodes']:
+        adjMatrix[node['index']] = node_dict.copy()
+    for link in data['links']:
+        adjMatrix[link['source']][link['target']] = 1
+    # print(adjMatrix)
+
+
 def adjSubgraph(mainGraphData, baseNodeIndex, numLayer, updateAdjMatrix=True):
     # initial
     downNodesFlag = {}
@@ -74,10 +110,8 @@ def adjSubgraph(mainGraphData, baseNodeIndex, numLayer, updateAdjMatrix=True):
         subAdjMatrix[node['index']] = downNodesFlag.copy()
 
     if updateAdjMatrix:
-        for node in mainGraphData['nodes']:
-            adjMatrix[node['index']] = downNodesFlag.copy()
-        for link in mainGraphData['links']:
-            adjMatrix[link['source']][link['target']] = 1
+        inniAdjMatrix(mainGraphData)
+        # print(adjMatrix)
 
     # down
     bfsQueue.put(baseNodeIndex)
@@ -133,6 +167,7 @@ def refreshIndex(data):
     for node, index in zip(nodes, range(0, len(nodes))):
         indexOld2New[node['index']] = index
         node['index'] = index
+
     for link in data['links']:
         link['source'] = indexOld2New[link['source']]
         link['target'] = indexOld2New[link['target']]
@@ -141,80 +176,41 @@ def refreshIndex(data):
     return data, indexNew2Old
 
 
-def md2json(mdName, jsonName):
-    graphData = []
-    text2deep = {
-        '#': 0,
-        '##': 1,
-        '###': 2,
-        '-': 3,
-        '\t-': 4,
-        '\t\t-': 5,
-        '\t\t\t-': 6,
-        '\t\t\t\t-': 7,
-        '\t\t\t\t\t-': 8
-    }
-    text2groupId = {
-        '任务': 0,
-        '方法': 1,
-        '步骤': 2,
-        '属性': 3,
-        '概念': 4
-    }
-
-    with open('./templates/' + mdName, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    index = 0
-    for line in lines:
-        if len(line) > 2:
-            # print('------------------------------------------------------------------------')
-            # print(line)
-            line = line.replace('\n', '')
-            line = re.split('[ ：\n]', line)
-            line[0] = text2deep[line[0]]
-            line.append(index)
-            # print(line)
-            if len(line) != 4:
-                print(line)
-            graphData.append(line)
-            index += 1
-
-    dfs = [graphData[0]]
-    curDeep = graphData[0][0]
-    nodes = [{'index': graphData[0][-1], 'label': graphData[0][2], 'groupId': text2groupId[graphData[0][1]]}]
-    links = []
-    for data in graphData[1:]:
-        nodes.append({'index': data[-1], 'label': data[2], 'groupId': text2groupId[data[1]]})
-        if data[0] <= curDeep:
-            while dfs.pop()[0] > data[0]:
-                continue
-        curDeep = data[0]
-        links.append({'source': dfs[-1][-1], 'target': data[-1]})
-        dfs.append(data)
-
-    with open('./templates/' + jsonName, 'w') as f:
-        json.dump({'nodes': nodes, 'links': links}, f)
-
-
-def searchSubGraph(graph, mainGraphData, search, numLayer, updateAdjMatrix=True):
+def searchSubGraph(graph, mainGraphData, search, numLayer, isRecommend, updateAdjMatrix=True):
     # search = '关联规则挖掘'
     subGraphData = False
     nodeMatcher = NodeMatcher(graph)
-    search_list = cut_for_search(search)
-
     print(search)
-    nodes = nodeMatcher.match(label=search).order_by('_.index')
-    for node in nodes:
-        # print(node)
-        tempSubGraphData = adjSubgraph(mainGraphData, node['index'], numLayer, updateAdjMatrix=updateAdjMatrix)
-        if subGraphData:
-            subGraphData = mergeGraph(subGraphData, tempSubGraphData)
-        else:
-            subGraphData = tempSubGraphData
+    model = KeyedVectors.load_word2vec_format('./DeepWalkModel/deepwalkModel', binary=False, encoding="utf8")
 
-    for key in search_list:
-        print(key)
-        nodes = nodeMatcher.match(label=key).order_by('_.index')
+
+    if isRecommend == 'true':
+        nodesIndex = []
+        nodes_list = []
+        nodeAndLink = search.split('的')
+
+        cql = 'MATCH (fn) WHERE fn.label = \'' + nodeAndLink[0] + '\' RETURN fn'
+        nodes = graph.run(cql).data()
+        for node in nodes:
+            nodesIndex.append(node['fn']['index'])
+            nodes_list.append({'index': node['fn']['index'], 'label': node['fn']['label'],
+                               'groupId': node['fn']['groupId']})
+
+        cql = 'MATCH (fn)-[r:' + nodeAndLink[1] + ']->(tn) WHERE fn.label = \'' + nodeAndLink[0] + '\' RETURN tn'
+        nodes = graph.run(cql).data()
+        for node in nodes:
+            nodesIndex.append(node['tn']['index'])
+            nodes_list.append({'index': node['tn']['index'], 'label': node['tn']['label'],
+                               'groupId': node['tn']['groupId']})
+
+        # 根据节点找出节点间关系
+        links_list = findLinksByNodesIndex(nodesIndex)
+        subGraphData = {'nodes': nodes_list, 'links': links_list}
+    elif isRecommend == 'false':
+        load_userdict('user_dict.txt')
+        search_list = cut_for_search(search)
+
+        nodes = nodeMatcher.match(label=search).order_by('_.index')
         for node in nodes:
             # print(node)
             tempSubGraphData = adjSubgraph(mainGraphData, node['index'], numLayer, updateAdjMatrix=updateAdjMatrix)
@@ -222,6 +218,18 @@ def searchSubGraph(graph, mainGraphData, search, numLayer, updateAdjMatrix=True)
                 subGraphData = mergeGraph(subGraphData, tempSubGraphData)
             else:
                 subGraphData = tempSubGraphData
+
+        for key in search_list:
+            print(key)
+            nodes = nodeMatcher.match(label=key).order_by('_.index')
+            for node in nodes:
+                # print(node)
+                tempSubGraphData = adjSubgraph(mainGraphData, node['index'], numLayer, updateAdjMatrix=updateAdjMatrix)
+                if subGraphData:
+                    subGraphData = mergeGraph(subGraphData, tempSubGraphData)
+                else:
+                    subGraphData = tempSubGraphData
+
     return subGraphData
 
 
@@ -252,7 +260,80 @@ def mergeGraph(graph0, graph1):
     return {'nodes': nodes_list, 'links': links_list}
 
 
+def findLinksByNodesIndex(nodesIndex):
+    global adjMatrix
+    links = []
+
+    for index in nodesIndex:
+        for key in adjMatrix[index].keys():
+            if adjMatrix[index][key] == 1 and key in nodesIndex:
+                links.append({'source': index, 'target': key})
+    return links
+
+
+def autoComplete(graph, search):
+    load_userdict('user_dict.txt')
+    search_list = list(cut_for_search(search))
+    search_list.insert(0, search)
+    print(search_list)
+    similarNode = []
+    for key in search_list:
+        similarNode += findInterdependentNode(key)
+    search_list = list(search_list) + similarNode + findInterdependentNode(search)
+    search_list = list(set(search_list))
+    print(search_list)
+
+    autoCompleteList = []
+    for key in search_list:
+        cql = 'MATCH (fn)-[r]->(tn) WHERE fn.label = \'' + key + '\' RETURN tn.groupId'
+        # try:
+        nodes = graph.run(cql).data()
+        groupIds = set(node['tn.groupId'] for node in nodes)
+        for groupId in groupIds:
+            autoCompleteList.append({'value': key + '的' + nodeLabel[groupId]})
+        # except:
+        #     print(cql)
+    return autoCompleteList
+
+
+def findInterdependentNode(word):
+    global model
+    res = []
+    try:
+        labels = model.most_similar(word, topn=50)
+        for label in labels:
+            if len(label[0]) < 7:
+                res.append(label[0])
+            if len(res) > 5:
+                break
+        return res
+    except:
+        return []
+
+model = KeyedVectors.load_word2vec_format('./DeepWalkModel/deepwalkModel', binary=False, encoding="utf8")
 
 # graph = connectNeo4j()
 # data = loadDataFromNeo4j(graph)
-md2json('graph.md', 'data.json')
+# md2json('graph.md', 'data.json')
+
+# with open('./templates/data.json', 'r') as f:
+#     data = json.load(f)
+
+# json2neo(data, graph)
+
+# autoComplete(graph, '关联规则挖掘')
+
+# userDict = []
+#     inniAdjMatrix(data)
+#     for node in data['nodes']:
+#         if node['groupId'] == 4 or (node['groupId'] != 3 and len(node['label']) < 7):
+#             cnt = 1
+#             for key in adjMatrix.keys():
+#                 if adjMatrix[key][node['index']]:
+#                     cnt += 1
+#             userDict.append(node['label'] + ' ' + str(cnt) + ' nz\n')
+#     with open('user_dict.txt', 'w', encoding='utf-8') as f:
+#         f.writelines(userDict)
+
+
+

@@ -17,8 +17,8 @@ def get_data():
         data = loadDataFromNeo4j(graph)
     else:
         # print(request.json)
-        with open('./templates/data.json', 'r') as f:
-            data = json.load(f)
+        data = loadDataFromJson('./templates/data.json')
+    inniAdjMatrix(data)
     return jsonify(data)
 
 
@@ -95,8 +95,14 @@ def get_search():
     else:
         updateAdjMatrix = False
     if databaseMode:
-        subGraphData = searchSubGraph(graph, mainGraphData, request.args['search'], int(request.args['numLayer']), updateAdjMatrix=updateAdjMatrix)
+        subGraphData = searchSubGraph(graph, mainGraphData, request.args['search'], int(request.args['numLayer']),
+                                      request.args['isRecommend'], updateAdjMatrix=updateAdjMatrix)
 
     if subGraphData:
         subGraphData, indexNew2Old = refreshIndex(subGraphData)
     return jsonify(subGraphData)
+
+
+@bp.route('/get_autoComplete', methods=['GET'])
+def get_autoComplete():
+    return jsonify(autoComplete(graph, request.args['search']))
