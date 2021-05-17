@@ -1,7 +1,4 @@
 .idea/
 __pycache__/
 .env
-
-*.png
-*.jpg
 *.iter5
