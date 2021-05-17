@@ -32,9 +32,9 @@ def post_data():
         links = []
         for node in data["nodes"]:
             try:
-                nodes.append({'index': node['index'], 'label': node['label'], 'groupId': node['groupId']})
+                nodes.append({'index': node['index'], 'label': node['label'], 'reference': node['reference'], 'groupId': node['groupId']})
             except KeyError:
-                nodes.append({'index': node['index'], 'groupId': node['groupId']})
+                nodes.append({'index': node['index'], 'reference': node['reference'], 'groupId': node['groupId']})
         for link in data["links"]:
             links.append({'source': link['source']['index'], 'target': link['target']['index']})
         data = {'nodes': nodes, 'links': links}

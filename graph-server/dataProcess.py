@@ -32,20 +32,33 @@ def md2json(mdName, jsonName):
             # print(line)
             line = line.replace('\n', '')
             line = re.split('[ ：\n]', line)
-            line[0] = text2deep[line[0]]
-            line.append(index)
+            try:
+                line[0] = text2deep[line[0]]
+                line.append('')
+                line.append(index)
+                graphData.append(line)
+                index += 1
+            except KeyError:
+                line = ''.join(line)
+                try:
+                    line = line[line.index('<')+1:line.index('>')]
+                    # print(line)
+                    graphData[-1][-2] = line
+                except ValueError:
+                    pass
             # print(line)
             if len(line) != 4:
-                print(line)
-            graphData.append(line)
-            index += 1
+                # print(line)
+                pass
+
+    print(graphData)
 
     dfs = [graphData[0]]
     curDeep = graphData[0][0]
-    nodes = [{'index': graphData[0][-1], 'label': graphData[0][2], 'groupId': text2groupId[graphData[0][1]]}]
+    nodes = [{'index': graphData[0][-1], 'label': graphData[0][2], 'reference': graphData[0][3], 'groupId': text2groupId[graphData[0][1]]}]
     links = []
     for data in graphData[1:]:
-        nodes.append({'index': data[-1], 'label': data[2], 'groupId': text2groupId[data[1]]})
+        nodes.append({'index': data[-1], 'label': data[2], 'reference': data[3], 'groupId': text2groupId[data[1]]})
         if data[0] <= curDeep:
             while dfs.pop()[0] > data[0]:
                 continue
@@ -55,3 +68,12 @@ def md2json(mdName, jsonName):
 
     with open('./templates/' + jsonName, 'w') as f:
         json.dump({'nodes': nodes, 'links': links}, f)
+
+
+soup = bs(open('chap18.html'), features='html.parser')
+ps = soup.find_all('p')
+for p in ps:
+    # print(p)
+    strs = p.strings
+    for s in strs:
+        print(s)

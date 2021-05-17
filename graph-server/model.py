@@ -30,9 +30,10 @@ def json2neo(data, graph):
     for node_json in data["nodes"]:
         try:
             node = Node(nodeLabel[node_json['groupId']], index=node_json['index'], label=node_json['label'],
-                        groupId=node_json['groupId'])
+                        reference=node_json['reference'], groupId=node_json['groupId'])
         except KeyError:
-            node = Node(nodeLabel[node_json['groupId']], index=node_json['index'], groupId=node_json['groupId'])
+            node = Node(nodeLabel[node_json['groupId']], index=node_json['index'], groupId=node_json['groupId'],
+                        reference=node_json['reference'])
         nodes.append(node)
     kg = Subgraph(nodes)
 
@@ -59,7 +60,8 @@ def loadDataFromNeo4j(graph):
         # if radius > 60:
         #     radius = 90
         nodes_list.append(
-            {'index': node['index'], 'label': node['label'], 'groupId': node['groupId'], 'radius': radius})
+            {'index': node['index'], 'label': node['label'], 'reference': node['reference'], 'groupId': node['groupId'],
+             'radius': radius})
     for link in list(links):
         links_list.append({'source': link.start_node['index'], 'target': link.end_node['index']})
     return {'nodes': nodes_list, 'links': links_list}
