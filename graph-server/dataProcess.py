@@ -41,7 +41,7 @@ def md2json(mdName, jsonName):
             except KeyError:
                 line = ''.join(line)
                 try:
-                    line = line[line.index('<')+1:line.index('>')]
+                    line = line[line.index('<') + 1:line.index('>')]
                     # print(line)
                     graphData[-1][-2] = line
                 except ValueError:
@@ -55,7 +55,8 @@ def md2json(mdName, jsonName):
 
     dfs = [graphData[0]]
     curDeep = graphData[0][0]
-    nodes = [{'index': graphData[0][-1], 'label': graphData[0][2], 'reference': graphData[0][3], 'groupId': text2groupId[graphData[0][1]]}]
+    nodes = [{'index': graphData[0][-1], 'label': graphData[0][2], 'reference': graphData[0][3],
+              'groupId': text2groupId[graphData[0][1]]}]
     links = []
     for data in graphData[1:]:
         nodes.append({'index': data[-1], 'label': data[2], 'reference': data[3], 'groupId': text2groupId[data[1]]})
@@ -71,9 +72,30 @@ def md2json(mdName, jsonName):
 
 
 soup = bs(open('chap18.html'), features='html.parser')
-ps = soup.find_all('p')
-for p in ps:
-    # print(p)
-    strs = p.strings
-    for s in strs:
-        print(s)
+p_s = soup.find_all('p')
+q = "对于规则来说，如果它同时满足最小支持度阈值和最小置信度阈值，则称它为强规则。"
+match_span_s = []
+i = 0
+while i < len(q):
+    for p in p_s:
+        span_s = p.find_all('span')
+        for span in span_s:
+            str_s = span.strings
+            for string in str_s:
+                # print(string, '\t', span)
+                # 判断
+                j = 0
+                while j < len(string):
+                    if i < len(q):
+                        if string[j] == q[i]:
+                            i = i + 1
+                            j = j + 1
+                        else:
+                            match_span_s = []
+                            j = j + 1
+                    else:
+                        break
+                    if string[j - 1] == q[i - 1]:
+                        match_span_s.append(span)
+match_span_s = list(set(match_span_s))
+print(match_span_s)

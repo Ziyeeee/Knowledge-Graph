@@ -36,7 +36,7 @@
         </div>
       </el-card>
     </el-dialog>
-    <EditNodeBox id="EditNodeBox" :nodeText="this.selectedNode.label" :dialogVisible="this.isVisible" msg="This is a Box"  @EditNodeInfo="EditNode"></EditNodeBox>
+    <EditNodeBox id="EditNodeBox" :nodeText="this.selectedNode.label" :nodeRef="this.selectedNode.reference" :dialogVisible="this.isVisible"  msg="This is a Box"  @EditNodeInfo="EditNode"></EditNodeBox>
     <BookDrawer :drawer="this.isShowDrawer" :selected-node="this.selectedNode" @isClose="closeDrawer"></BookDrawer>
   </div>
 </template>
@@ -451,8 +451,9 @@ export default {
        this.selectedNode = this.data.nodes[d3.select(d.target).attr("index")];
        this.isVisible = true;
     },
-    EditNode(nodeLabel){
+    EditNode(nodeLabel, nodeReference){
       this.selectedNode.label = nodeLabel;
+      this.selectedNode.reference = nodeReference;
       this.drawNodeText();
       this.isVisible = false;
     },
