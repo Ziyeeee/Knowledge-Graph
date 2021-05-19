@@ -81,7 +81,7 @@ def matchSpans(soup, content):
             str_s = span.strings
             for string in str_s:
                 j = 0
-                string = string.replace('：', '')
+                # string = string.replace('：', '')
                 while j < len(string):
                     if i < len(content):
                         if string[j] == content[i] or not isChinese(content[i]):

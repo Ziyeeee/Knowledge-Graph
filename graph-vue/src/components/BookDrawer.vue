@@ -38,7 +38,7 @@
         this.$nextTick(() => {
           this.elmnt = document.getElementsByClassName("node" + this.selectedNode.index);
           for (let i = 0; i < this.elmnt.length; i++) {
-            this.elmnt[i].style.background = 'yellow';
+            this.elmnt[i].style.background = '#99e0fc';
           }
           this.elmnt[0].scrollIntoView(true, {behavior: "smooth"});
         })

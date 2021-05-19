@@ -41,7 +41,7 @@
       </el-menu-item>
       <el-menu-item class="el-submenu" index="3">
         <i class="el-icon-delete-solid"></i>
-        <span slot="title">删除边</span>
+        <span slot="title">删除关系</span>
       </el-menu-item>
       <el-menu-item class="el-submenu" index="4">
         <i class="el-icon-more-outline"></i>
