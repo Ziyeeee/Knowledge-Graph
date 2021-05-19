@@ -71,31 +71,66 @@ def md2json(mdName, jsonName):
         json.dump({'nodes': nodes, 'links': links}, f)
 
 
-soup = bs(open('chap18.html'), features='html.parser')
-p_s = soup.find_all('p')
-q = "对于规则来说，如果它同时满足最小支持度阈值和最小置信度阈值，则称它为强规则。"
-match_span_s = []
-i = 0
-while i < len(q):
+def matchSpans(soup, content):
+    p_s = soup.find_all('p', class_=['MsoNormal', 'MsoListParagraph', 'MsoFootnoteText'])
+    match_span_s = []
+    i = 0
     for p in p_s:
         span_s = p.find_all('span')
         for span in span_s:
             str_s = span.strings
             for string in str_s:
-                # print(string, '\t', span)
-                # 判断
                 j = 0
+                string = string.replace('：', '')
                 while j < len(string):
-                    if i < len(q):
-                        if string[j] == q[i]:
+                    if i < len(content):
+                        if string[j] == content[i] or not isChinese(content[i]):
+                            if span not in match_span_s:
+                                match_span_s.append(span)
                             i = i + 1
+                            j = j + 1
+                        elif string[j] == '：':
                             j = j + 1
                         else:
                             match_span_s = []
                             j = j + 1
                     else:
-                        break
-                    if string[j - 1] == q[i - 1]:
-                        match_span_s.append(span)
-match_span_s = list(set(match_span_s))
-print(match_span_s)
+                        return list(set(match_span_s))
+
+
+
+    return list(set(match_span_s))
+
+
+
+def isChinese(char):
+    if u'\u4e00' <= char <= u'\u9fff':
+        return True
+    else:
+        return False
+
+
+# md2json('graph.md', 'data.json')
+
+soup = bs(open('chap18.html'), features='html.parser')
+with open('./templates/data.json', 'r') as f:
+    data = json.load(f)
+nodes = data['nodes']
+for node in nodes:
+    if len(node['reference']) > 0:
+        spans = matchSpans(soup, node['reference'])
+        # if len(spans) == 0:
+        #     print(node['reference'])
+
+        for span in spans:
+            try:
+                span['class'] += ' node' + str(node['index'])
+            except KeyError:
+                span['class'] = 'node' + str(node['index'])
+            # print(span['class'])
+
+html = soup.prettify("utf-8")
+with open("chap18_marked.html", "wb") as file:
+    file.write(html)
+
+# print(matchSpans(soup, '单维关联规则若关联规则中的项或属性只涉及一个维，则称它为单维关联规则。单维关联规则展示了同一个属性或维内的联系。'))

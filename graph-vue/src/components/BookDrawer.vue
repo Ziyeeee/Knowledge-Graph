@@ -22,6 +22,7 @@
       return {
         drawer: false,
         selectedNode: {},
+        elmnt: [],
       };
     },
     watch: {
@@ -35,13 +36,18 @@
     methods: {
       editMapRow() {
         this.$nextTick(() => {
-          var elmnt = document.getElementById("test_img");
-          console.log(elmnt);
-          elmnt.scrollIntoView(true);
+          this.elmnt = document.getElementsByClassName("node" + this.selectedNode.index);
+          for (let i = 0; i < this.elmnt.length; i++) {
+            this.elmnt[i].style.background = 'yellow';
+          }
+          this.elmnt[0].scrollIntoView(true, {behavior: "smooth"});
         })
       },
       handleClose(){
         this.$emit("isClose");
+        for (let i = 0; i < this.elmnt.length; i++) {
+          this.elmnt[i].style.background = '';
+        }
       }
     }
   }
