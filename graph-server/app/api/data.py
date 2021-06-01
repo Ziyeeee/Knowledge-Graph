@@ -19,6 +19,8 @@ def get_data():
         # print(request.json)
         data = loadDataFromJson('./templates/data.json')
     inniAdjMatrix(data)
+
+    # data = {'nodes': [], 'links': []}
     return jsonify(data)
 
 
@@ -75,7 +77,8 @@ def get_subGraphData():
         subGraphData = adjSubgraph(mainGraphData, int(request.args['baseNodeIndex']), int(request.args['numLayer']),
                                    updateAdjMatrix=updateAdjMatrix)
     subGraphData, indexNew2Old = refreshIndex(subGraphData)
-    return jsonify(subGraphData)
+    res = {'subgraph': subGraphData, 'new2old': list(indexNew2Old.values())}
+    return jsonify(res)
 
 
 @bp.route('/get_mainGraphData', methods=['GET'])
@@ -100,7 +103,8 @@ def get_search():
 
     if subGraphData:
         subGraphData, indexNew2Old = refreshIndex(subGraphData)
-    return jsonify(subGraphData)
+    res = {'subgraph': subGraphData, 'new2old': list(indexNew2Old.values())}
+    return jsonify(res)
 
 
 @bp.route('/get_autoComplete', methods=['GET'])

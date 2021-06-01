@@ -21,7 +21,7 @@
               placeholder="搜索"
               @select="handleSelect"
           >
-            <el-button slot="append" icon="el-icon-search" @click="findSubGraph"></el-button>
+            <el-button slot="append" icon="el-icon-search" @click="findSubGraph"  ></el-button>
           </el-autocomplete>
 <!--          <el-input v-model="searchInput" clearable placeholder="搜索" @keydown.enter.native="findSubGraph">-->
 <!--            <el-button slot="append" icon="el-icon-search" @click="findSubGraph"></el-button>-->
@@ -32,12 +32,16 @@
     <el-dialog :title="cardTitle" :visible.sync="dialogCardVisible" :append-to-body="true">
       <el-card class="box-card" shadow="never">
         <div v-for="item in cardItems" :key="item" class="text item">
-          <el-button type="text" @click="clickCardText(item.label)" >{{item.label}}</el-button>
+          <el-card shadow="hover">
+            <el-link type="primary" align="left" @click="clickCardText(item.label)" >{{item.label}}</el-link>
+            <el-divider><i class="el-icon-s-management"></i></el-divider>
+            <el-col align="left">原文参考：{{item.reference}}<br /><br /></el-col>
+          </el-card>
         </div>
       </el-card>
     </el-dialog>
     <EditNodeBox id="EditNodeBox" :nodeText="this.selectedNode.label" :nodeRef="this.selectedNode.reference" :dialogVisible="this.isVisible"  msg="This is a Box"  @EditNodeInfo="EditNode"></EditNodeBox>
-    <BookDrawer :drawer="this.isShowDrawer" :selected-node="this.selectedNode" @isClose="closeDrawer"></BookDrawer>
+    <BookDrawer :drawer="this.isShowDrawer" :selected-node="this.selectedNode" :indexNew2Old="this.indexNew2Old" @isClose="closeDrawer"></BookDrawer>
   </div>
 </template>
 
@@ -89,6 +93,7 @@ export default {
       cardTitle: '',
       cardItems: [],
       isShowDrawer: false,
+      indexNew2Old: [],
 
       data: {},
       // data: {nodes: nodes, links: edges},
@@ -144,6 +149,7 @@ export default {
       this.axios.get(url)
           .then((res) => {
             this.data = res.data;
+            this.indexNew2Old = [];
             console.log(res.data);
             this.svg = d3.select("#GraphD3")
                 .attr("height", this.height)
@@ -338,7 +344,8 @@ export default {
           .then((res) => {
             this.mouseLeaveNode();
             console.log(res.data);
-            this.data = res.data;
+            this.data = res.data.subgraph;
+            this.indexNew2Old = res.data.new2old;
             this.updateGraph();
           })
           .catch((error) =>{
@@ -358,7 +365,8 @@ export default {
               });
             }
             else {
-              this.data = res.data;
+              this.data = res.data.subgraph;
+              this.indexNew2Old = res.data.new2old;
               this.updateGraph();
               if (this.isInList(this.searchInput, this.autoCompleteList)){
                 this.dialogCardVisible = true
@@ -420,7 +428,8 @@ export default {
               });
             }
             else {
-              this.data = res.data;
+              this.data = res.data.subgraph;
+              this.indexNew2Old = res.data.new2old;
               this.updateGraph();
             }
           })
@@ -437,6 +446,7 @@ export default {
           .then((res) => {
             // console.log(res.data);
             this.data = res.data;
+            this.indexNew2Old = [];
             this.updateGraph();
 
           })
@@ -470,7 +480,8 @@ export default {
     // 节点绘制相关
     addNode(source) {
       if(!this.mouseIsSelect) {
-        this.data.nodes.push({index: this.data.nodes.length, groupId: parseInt(this.$store.state.clickPath[1][2]), x: source.x, y: source.y});
+        this.data.nodes.push({index: this.data.nodes.length, label: 'Node ' + this.data.nodes.length, reference: '',
+          groupId: parseInt(this.$store.state.clickPath[1][2]), x: source.x, y: source.y});
         // console.log(this.data.nodes);
 
         this.drawNodes();
@@ -518,7 +529,7 @@ export default {
                   .attr("text-anchor","middle")
                   .text(d => {
                     if (d.groupId == 3) {
-                      if (d.label.length >= 4) {
+                      if (d.label.length >= 7) {
                         // return d.label
                         return d.label.substr(0, 4) + '…'
                       }

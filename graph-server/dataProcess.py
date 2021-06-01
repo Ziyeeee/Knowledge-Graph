@@ -102,7 +102,6 @@ def matchSpans(soup, content):
     return list(set(match_span_s))
 
 
-
 def isChinese(char):
     if u'\u4e00' <= char <= u'\u9fff':
         return True

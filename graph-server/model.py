@@ -5,7 +5,6 @@ from jieba import load_userdict, cut_for_search
 import json
 from gensim.models import KeyedVectors
 
-
 adjMatrix = {}
 nodeLabel = [
     '任务',
@@ -183,8 +182,6 @@ def searchSubGraph(graph, mainGraphData, search, numLayer, isRecommend, updateAd
     subGraphData = False
     nodeMatcher = NodeMatcher(graph)
     print(search)
-    model = KeyedVectors.load_word2vec_format('./DeepWalkModel/deepwalkModel', binary=False, encoding="utf8")
-
 
     if isRecommend == 'true':
         nodesIndex = []
@@ -196,14 +193,14 @@ def searchSubGraph(graph, mainGraphData, search, numLayer, isRecommend, updateAd
         for node in nodes:
             nodesIndex.append(node['fn']['index'])
             nodes_list.append({'index': node['fn']['index'], 'label': node['fn']['label'],
-                               'groupId': node['fn']['groupId']})
+                               'groupId': node['fn']['groupId'], 'reference': node['fn']['reference']})
 
         cql = 'MATCH (fn)-[r:' + nodeAndLink[1] + ']->(tn) WHERE fn.label = \'' + nodeAndLink[0] + '\' RETURN tn'
         nodes = graph.run(cql).data()
         for node in nodes:
             nodesIndex.append(node['tn']['index'])
             nodes_list.append({'index': node['tn']['index'], 'label': node['tn']['label'],
-                               'groupId': node['tn']['groupId']})
+                               'groupId': node['tn']['groupId'], 'reference': node['tn']['reference']})
 
         # 根据节点找出节点间关系
         links_list = findLinksByNodesIndex(nodesIndex)
@@ -282,7 +279,10 @@ def autoComplete(graph, search):
     for key in search_list:
         similarNode += findInterdependentNode(key)
     search_list = list(search_list) + similarNode + findInterdependentNode(search)
-    search_list = list(set(search_list))
+    search_list_temp = []
+    for t in search_list:
+        if t not in search_list_temp: search_list_temp.append(t)
+    search_list = search_list_temp
     print(search_list)
 
     autoCompleteList = []
@@ -312,6 +312,7 @@ def findInterdependentNode(word):
     except:
         return []
 
+
 model = KeyedVectors.load_word2vec_format('./DeepWalkModel/deepwalkModel', binary=False, encoding="utf8")
 
 # graph = connectNeo4j()
@@ -336,6 +337,3 @@ model = KeyedVectors.load_word2vec_format('./DeepWalkModel/deepwalkModel', binar
 #             userDict.append(node['label'] + ' ' + str(cnt) + ' nz\n')
 #     with open('user_dict.txt', 'w', encoding='utf-8') as f:
 #         f.writelines(userDict)
-
-
-

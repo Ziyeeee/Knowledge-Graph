@@ -1,11 +1,11 @@
 <template>
-  <el-dialog :visible.sync="dialogVisible" title="节点信息" :append-to-body="true" :before-close="getInfo" center>
-    <el-row>
-      <el-col :span="6">节点名称</el-col>
+  <el-dialog :visible.sync="dialogVisible" title="节点信息" :append-to-body="true" :before-close="getInfo">
+    <el-row type="flex" justify="center" align="middle">
+      <el-col :span="6" style="text-align:center">节点名称</el-col>
       <el-col :span="18"><el-input  :placeholder="!nodeText?'请输入节点信息':nodeText" v-model="label" @keydown.enter.native="getInfo"></el-input></el-col>
     </el-row>
-    <el-row>
-      <el-col :span="6">原文参考</el-col>
+    <el-row type="flex" justify="center" align="middle">
+      <el-col :span="6" style="text-align:center">原文参考</el-col>
       <el-col :span="18"><el-input  :placeholder="!nodeRef?'请输入原文参考':nodeRef" v-model="reference" @keydown.enter.native="getInfo"></el-input></el-col>
     </el-row>
     <span slot="footer" class="dialog-footer">
@@ -43,4 +43,10 @@ export default {
 </script>
 
 <style scoped>
+.el-row {
+  margin-bottom: 20px;
+}
+.el-col {
+  border-radius: 4px;
+}
 </style>
