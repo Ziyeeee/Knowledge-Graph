@@ -276,7 +276,9 @@ export default {
     // eslint-disable-next-line no-unused-vars
     mouseLeaveNode(d) {
       this.mouseIsSelect = false;
-      if (this.$store.state.clickPath && (this.$store.state.clickPath[0] === "1" || this.$store.state.clickPath[0] === "2" ||this.$store.state.clickPath[0] === "4"||this.$store.state.clickPath[0] === "6")){
+      if (this.$store.state.clickPath && (this.$store.state.clickPath[0] === "1" ||
+          this.$store.state.clickPath[0] === "2" ||this.$store.state.clickPath[0] === "4"||
+          this.$store.state.clickPath[0] === "6")){
         this.cursor.transition()
             .attr("r", radius)
             .transition()

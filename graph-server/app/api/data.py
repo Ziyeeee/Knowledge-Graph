@@ -21,7 +21,7 @@ def get_data():
     inniAdjMatrix(data)
 
     # data = {'nodes': [], 'links': []}
-    return jsonify(data)
+    return jsonify({'nodes': [], 'links': []})
 
 
 @bp.route('/post_data', methods=['POST', 'OPTIONS'])

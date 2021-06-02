@@ -5,6 +5,7 @@ from model import connectNeo4j
 
 
 databaseMode = True
+
 if databaseMode:
     graph = connectNeo4j()
 

@@ -49,7 +49,7 @@
       handleClose(){
         this.$emit("isClose");
         for (let i = 0; i < this.elmnt.length; i++) {
-          this.elmnt[i].style.background = '';
+          this.elmnt[i].style.background = '#ffffff';
         }
       }
     }

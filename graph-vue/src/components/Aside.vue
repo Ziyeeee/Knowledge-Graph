@@ -55,6 +55,14 @@
         <i class="el-icon-document"></i>
         <span slot="title">参考原文</span>
       </el-menu-item>
+      <el-menu-item class="el-submenu" index="7">
+        <i class="el-icon-edit"></i>
+        <span slot="title">查看与编辑</span>
+      </el-menu-item>
+      <el-menu-item class="el-submenu" index="8">
+        <i class="el-icon-data-analysis"></i>
+        <span slot="title">Demo</span>
+      </el-menu-item>
     </el-menu>
   </el-aside>
 </template>
@@ -75,7 +83,7 @@ export default {
     handleSelect(key, keyPath) {
       this.$store.commit('updateClickType', keyPath);
       // console.log(key, keyPath)
-      if(keyPath[0] === "5") {
+      if(keyPath[0] === "5" || keyPath[0] === "8") {
         this.$store.commit('showMainGraph', true);
       }
       else {
