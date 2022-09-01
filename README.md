@@ -1,2 +1,2 @@
 # Knowledge Graph
- 毕业设计
+ 课程知识图谱可视化
